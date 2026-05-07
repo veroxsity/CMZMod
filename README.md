@@ -105,7 +105,7 @@ Then point the build at `C:\msys64\ucrt64\` instead of `C:\botan\` (edit `stfs-c
 After all the prerequisites are installed and you have a retail CMZ STFS file at hand:
 
 ```powershell
-git clone https://github.com/<YourGitHub>/CMZMod.git
+git clone https://github.com/veroxsity/CMZMod.git
 cd CMZMod
 
 # 1. Extract the assets from your retail STFS (one-time)
