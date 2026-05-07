@@ -1,0 +1,62 @@
+diff --git a/XboxInternals/Stfs/StfsPackage.cpp b/XboxInternals/Stfs/StfsPackage.cpp
+index 5031e15..ca8e28e 100644
+--- a/XboxInternals/Stfs/StfsPackage.cpp
++++ b/XboxInternals/Stfs/StfsPackage.cpp
+@@ -1234,7 +1234,7 @@ void StfsPackage::WriteFileListing(bool usePassed, vector<StfsFileEntry> *outFis
+         // check to see if we need to go to the next block
+         if (firstCheck)
+             firstCheck = false;
+-        else if ((i + 1) % 0x40 == 0)
++        else if (i % 0x40 == 0)
+         {
+             // check if we need to allocate a new block
+             INT24 nextBlock;
+@@ -1575,11 +1575,7 @@ void StfsPackage::FindDirectoryListing(vector<string> locationOfDirectory, StfsF
+             if (finalLoop)
+                 *out = &start->folderEntries.at(i);
+             else
+-                for (DWORD i = 0; i < start->folderEntries.size(); i++)
+-                    if(*out == NULL)
+-                        FindDirectoryListing(locationOfDirectory, &start->folderEntries.at(i), out);
+-                    else
+-                        break;
++                FindDirectoryListing(locationOfDirectory, &start->folderEntries.at(i), out);
+ 
+             break;
+         }
+diff --git a/XboxInternals/winnames.h b/XboxInternals/winnames.h
+index 8d3a83e..d83eb6f 100644
+--- a/XboxInternals/winnames.h
++++ b/XboxInternals/winnames.h
+@@ -1,19 +1,21 @@
+ #ifndef WINNAMES_H
+ #define WINNAMES_H
+ 
+-typedef unsigned char BYTE;
+-typedef unsigned short WORD;
+-typedef unsigned long DWORD;
+-typedef int INT32;
+-typedef long long INT64;
+-typedef unsigned long long UINT64;
++#include <cstdint>
++
++typedef uint8_t  BYTE;
++typedef uint16_t WORD;
++typedef uint32_t DWORD;
++typedef int32_t  INT32;
++typedef int64_t  INT64;
++typedef uint64_t UINT64;
+ 
+ typedef struct _WINFILETIME {
+     DWORD dwHighDateTime;
+     DWORD dwLowDateTime;
+ } WINFILETIME;
+ 
+-typedef short INT16;
+-typedef signed int INT24;
++typedef int16_t INT16;
++typedef int32_t INT24;
+ 
+-#endif // WINNAMES_H
+\ No newline at end of file
++#endif // WINNAMES_H

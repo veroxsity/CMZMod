@@ -1,0 +1,26 @@
+
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNA.Common", "DNA Common\DNA.Common.csproj", "{09B9694F-7124-46A2-852C-1F9F12A54C00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CastleMinerZ", "CastleMinerZ\CastleMinerZ.csproj", "{7BC0BC14-B424-4709-80FA-08E7F42B2DFB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Xbox 360 = Debug|Xbox 360
+		Release|Xbox 360 = Release|Xbox 360
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{09B9694F-7124-46A2-852C-1F9F12A54C00}.Debug|Xbox 360.ActiveCfg = Debug|Xbox 360
+		{09B9694F-7124-46A2-852C-1F9F12A54C00}.Debug|Xbox 360.Build.0 = Debug|Xbox 360
+		{09B9694F-7124-46A2-852C-1F9F12A54C00}.Release|Xbox 360.ActiveCfg = Release|Xbox 360
+		{09B9694F-7124-46A2-852C-1F9F12A54C00}.Release|Xbox 360.Build.0 = Release|Xbox 360
+		{7BC0BC14-B424-4709-80FA-08E7F42B2DFB}.Debug|Xbox 360.ActiveCfg = Debug|Xbox 360
+		{7BC0BC14-B424-4709-80FA-08E7F42B2DFB}.Debug|Xbox 360.Build.0 = Debug|Xbox 360
+		{7BC0BC14-B424-4709-80FA-08E7F42B2DFB}.Release|Xbox 360.ActiveCfg = Release|Xbox 360
+		{7BC0BC14-B424-4709-80FA-08E7F42B2DFB}.Release|Xbox 360.Build.0 = Release|Xbox 360
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
