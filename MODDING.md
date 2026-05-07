@@ -16,7 +16,7 @@ The guide is organized by mod type, in roughly increasing order of difficulty:
 10. [Multiplayer compatibility (the protocol-version trap)](#10-multiplayer-compatibility)
 11. [Debugging mods that don't work](#11-debugging)
 
-Throughout this guide, file paths are relative to `C:\Users\Dan\Documents\Programming\CMZMod\` unless otherwise stated.
+Throughout this guide, file paths are relative to `C:\Users\YourUsername\Documents\Programming\CMZMod\` unless otherwise stated.
 
 ---
 
@@ -60,7 +60,7 @@ Change to whatever you want. Useful pattern: tag each test build (`"BUILD 0.3 - 
 The version constant lives near `CastleMinerZGame.cs`. Find it with:
 
 ```powershell
-cd C:\Users\Dan\Documents\Programming\CMZMod
+cd C:\Users\YourUsername\Documents\Programming\CMZMod
 Get-ChildItem -Recurse -Filter *.cs | Select-String "CastleMiner Z v" | Select Path, LineNumber, Line
 ```
 
@@ -127,7 +127,7 @@ Stat constants live alongside their classes. Look for hardcoded numbers in:
 ### Pattern: find with grep
 
 ```powershell
-cd C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ
+cd C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ
 Get-ChildItem -Recurse -Filter *.cs | Select-String "MaxHealth\s*=" | Select Path, LineNumber, Line
 ```
 
@@ -158,13 +158,13 @@ CMZ ships every texture as a `.xnb` file in the `Content\` folder. The `.xnb` fo
 The community standard is **xnbcli** (https://github.com/LeonBlade/xnbcli). It's a Node.js command-line tool that handles decompile/recompile in both directions for textures, and it works without the full XNA Content Pipeline. Install Node.js if you don't have it, then:
 
 ```cmd
-cd C:\Users\Dan\Documents\Programming
+cd C:\Users\YourUsername\Documents\Programming
 git clone https://github.com/LeonBlade/xnbcli.git
 cd xnbcli
 npm install
 ```
 
-Now `xnbcli` is ready to use from `C:\Users\Dan\Documents\Programming\xnbcli\`.
+Now `xnbcli` is ready to use from `C:\Users\YourUsername\Documents\Programming\xnbcli\`.
 
 Alternative tools exist (XNB Extract, XNB Reverter) but xnbcli is the most actively maintained and has the simplest install.
 
@@ -174,13 +174,13 @@ Using the torch icon as the example because it's small and easy to spot in-game:
 
 ```powershell
 # 1. Find the source .xnb
-$source = "C:\Users\Dan\Documents\Programming\CMZMod\cmz_extracted\584E07D1\Content\Torch.xnb"
+$source = "C:\Users\YourUsername\Documents\Programming\CMZMod\cmz_extracted\584E07D1\Content\Torch.xnb"
 
 # 2. Back it up first. Always.
 Copy-Item $source "$source.backup"
 
 # 3. Decompile to PNG
-cd C:\Users\Dan\Documents\Programming\xnbcli
+cd C:\Users\YourUsername\Documents\Programming\xnbcli
 .\xnbcli.exe unpack $source .\workspace
 # Produces .\workspace\Torch.png and .\workspace\Torch.json
 
@@ -194,7 +194,7 @@ cd C:\Users\Dan\Documents\Programming\xnbcli
 Copy-Item .\workspace_packed\Torch.xnb $source -Force
 
 # 7. Build and deploy
-cd C:\Users\Dan\Documents\Programming\CMZMod
+cd C:\Users\YourUsername\Documents\Programming\CMZMod
 .\deploy.ps1 -Pack
 ```
 
@@ -285,7 +285,7 @@ public enum InventoryItemIDs : int
 Look at how `IronPickaxe` is defined. Search:
 
 ```powershell
-cd C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ
+cd C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ
 Get-ChildItem -Recurse -Filter *.cs | Select-String "class IronPickaxe" | Select Path, LineNumber
 ```
 
@@ -335,7 +335,7 @@ There is almost certainly an item factory or registry somewhere that maps `Inven
 Find it by searching for where `IronPickaxe()` is constructed in code that's not the class itself:
 
 ```powershell
-cd C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ
+cd C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ
 Get-ChildItem -Recurse -Filter *.cs | Select-String "new IronPickaxe\(\)" | Select Path, LineNumber, Line
 ```
 
@@ -431,7 +431,7 @@ Tweak existing blocks instead of adding new ones. Make stone harder to mine, cha
 In the world builder or a spawn manager class. Search:
 
 ```powershell
-cd C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ
+cd C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ
 Get-ChildItem -Recurse -Filter *.cs | Select-String "SpawnRate|spawnTime|MaxEnemies"
 ```
 
@@ -564,7 +564,7 @@ Run `stfs-cli\stfs_list.exe CMZModded.stfs > listing.txt` and compare against re
 ### Find all hardcoded constants of a given name
 
 ```powershell
-Get-ChildItem -Recurse -Path C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ -Filter *.cs |
+Get-ChildItem -Recurse -Path C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ -Filter *.cs |
     Select-String "MaxHealth|Damage|SpawnRate" |
     Select Path, LineNumber, Line | Format-List
 ```
@@ -572,15 +572,15 @@ Get-ChildItem -Recurse -Path C:\Users\Dan\Documents\Programming\CMZMod\CastleMin
 ### Quick grep across the whole codebase
 
 ```powershell
-Get-ChildItem -Recurse -Path C:\Users\Dan\Documents\Programming\CMZMod -Filter *.cs |
+Get-ChildItem -Recurse -Path C:\Users\YourUsername\Documents\Programming\CMZMod -Filter *.cs |
     Select-String "your search term"
 ```
 
 ### Compare your build's binaries against vanilla
 
 ```powershell
-$vanilla = "C:\Users\Dan\Documents\Programming\CMZMod\cmz_extracted\584E07D1"
-$modded  = "C:\Users\Dan\Documents\Programming\CMZMod\deploy\584E07D1"
+$vanilla = "C:\Users\YourUsername\Documents\Programming\CMZMod\cmz_extracted\584E07D1"
+$modded  = "C:\Users\YourUsername\Documents\Programming\CMZMod\deploy\584E07D1"
 Compare-Object `
     (Get-FileHash $vanilla\CastleMinerZ.exe).Hash `
     (Get-FileHash $modded\CastleMinerZ.exe).Hash
@@ -591,7 +591,7 @@ If hashes match, you're somehow still shipping vanilla; investigate.
 ### Find which file contains an item ID
 
 ```powershell
-Get-ChildItem -Recurse -Path C:\Users\Dan\Documents\Programming\CMZMod\CastleMinerZ -Filter *.cs |
+Get-ChildItem -Recurse -Path C:\Users\YourUsername\Documents\Programming\CMZMod\CastleMinerZ -Filter *.cs |
     Select-String "InventoryItemIDs\.IronPickaxe" |
     Select Path, LineNumber
 ```
