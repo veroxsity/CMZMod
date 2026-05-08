@@ -192,7 +192,7 @@ namespace DNA.CastleMinerZ
 					startWorld();
 					break;
 				case GameModeTypes.DragonEndurance:
-					if (Guide.IsTrialMode)
+					if (false /* Guide.IsTrialMode patched out for RGH */)
 					{
 						_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 					}
@@ -208,7 +208,7 @@ namespace DNA.CastleMinerZ
 					}
 					break;
 				case GameModeTypes.Survival:
-					if (Guide.IsTrialMode)
+					if (false /* Guide.IsTrialMode patched out for RGH */)
 					{
 						_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 					}
@@ -220,7 +220,7 @@ namespace DNA.CastleMinerZ
 				case GameModeTypes.Creative:
 					_game.GameMode = GameModeTypes.Survival;
 					_game.InfiniteResourceMode = true;
-					if (Guide.IsTrialMode)
+					if (false /* Guide.IsTrialMode patched out for RGH */)
 					{
 						_game.ShowMarketPlace();
 					}
@@ -243,7 +243,7 @@ namespace DNA.CastleMinerZ
 			case GameModeTypes.Creative:
 				_game.GameMode = GameModeTypes.Survival;
 				_game.InfiniteResourceMode = true;
-				if (Guide.IsTrialMode)
+				if (false /* Guide.IsTrialMode patched out for RGH */)
 				{
 					_game.ShowMarketPlace();
 				}
@@ -328,7 +328,7 @@ namespace DNA.CastleMinerZ
 		private void startWorld()
 		{
 			WorldTypeIDs terrainVersion = _game.CurrentWorld._terrainVersion;
-			if (!Guide.IsTrialMode)
+			if (!false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				WorldManager.TakeOwnership(_game.CurrentWorld);
 			}
@@ -625,7 +625,7 @@ namespace DNA.CastleMinerZ
 			switch ((MainMenuItems)e.MenuItem.Tag)
 			{
 			case MainMenuItems.HostOnline:
-				if (Guide.IsTrialMode)
+				if (false /* Guide.IsTrialMode patched out for RGH */)
 				{
 					_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 				}
@@ -641,7 +641,7 @@ namespace DNA.CastleMinerZ
 				}
 				break;
 			case MainMenuItems.JoinOnline:
-				if (Guide.IsTrialMode)
+				if (false /* Guide.IsTrialMode patched out for RGH */)
 				{
 					_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 				}
@@ -661,7 +661,7 @@ namespace DNA.CastleMinerZ
 				_uiGroup.PushScreen(_gameModeMenu);
 				break;
 			case MainMenuItems.Redeem:
-				if (Guide.IsTrialMode)
+				if (false /* Guide.IsTrialMode patched out for RGH */)
 				{
 					_game.ShowMarketPlace();
 				}
@@ -856,7 +856,7 @@ namespace DNA.CastleMinerZ
 
 		private void _upSellScreen_Updating(object sender, UpdateEventArgs e)
 		{
-			if (!Guide.IsTrialMode)
+			if (!false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				_uiGroup.PopScreen();
 			}

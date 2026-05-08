@@ -50,7 +50,7 @@ namespace DNA.CastleMinerZ.UI
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
 		{
 			SignedInGamer currentGamer = Screen.CurrentGamer;
-			purchaseInGameControl.Visible = Guide.IsTrialMode;
+			purchaseInGameControl.Visible = false /* Guide.IsTrialMode patched out for RGH */;
 			hostOptions.Visible = _game.IsOnlineGame && _game.CurrentNetworkSession.IsHost && _game.CurrentWorld.OwnerGamerTag == Screen.CurrentGamer.Gamertag;
 			inviteControl.Visible = _game.IsOnlineGame && currentGamer.Privileges.AllowCommunication != GamerPrivilegeSetting.Blocked && !currentGamer.IsGuest;
 			base.OnUpdate(game, gameTime);

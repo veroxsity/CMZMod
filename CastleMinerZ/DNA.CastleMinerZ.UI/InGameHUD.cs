@@ -859,7 +859,7 @@ namespace DNA.CastleMinerZ.UI
 				CastleMinerZGame.Instance.PlayerStats.MaxDistanceTraveled = Math.Max(CastleMinerZGame.Instance.PlayerStats.MaxDistanceTraveled, currentDistanceTraveled);
 				CastleMinerZGame.Instance.PlayerStats.MaxDepth = Math.Min(CastleMinerZGame.Instance.PlayerStats.MaxDepth, _game.LocalPlayer.LocalPosition.Y);
 			}
-			if (Guide.IsTrialMode)
+			if (false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				if (currentDistanceTraveled <= 300)
 				{

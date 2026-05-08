@@ -59,9 +59,9 @@ namespace DNA.CastleMinerZ.UI
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
 		{
 			SignedInGamer currentGamer = Screen.CurrentGamer;
-			SurvivalControl.TextColor = ((!Guide.IsTrialMode) ? Color.White : Color.Gray);
-			CreativeControl.TextColor = ((!Guide.IsTrialMode && CastleMinerZGame.Instance.FrontEnd.PromoCodes[5].Redeemed) ? Color.White : Color.Gray);
-			DragonEnduranceControl.TextColor = ((!Guide.IsTrialMode && (CastleMinerZGame.Instance.PlayerStats.UndeadDragonKills > 0 || _game.PlayerStats.v1Player || CastleMinerZGame.Instance.FrontEnd.PromoCodes[4].Redeemed)) ? Color.White : Color.Gray);
+			SurvivalControl.TextColor = ((!false /* Guide.IsTrialMode patched out for RGH */) ? Color.White : Color.Gray);
+			CreativeControl.TextColor = ((!false /* Guide.IsTrialMode patched out for RGH */ && CastleMinerZGame.Instance.FrontEnd.PromoCodes[5].Redeemed) ? Color.White : Color.Gray);
+			DragonEnduranceControl.TextColor = ((!false /* Guide.IsTrialMode patched out for RGH */ && (CastleMinerZGame.Instance.PlayerStats.UndeadDragonKills > 0 || _game.PlayerStats.v1Player || CastleMinerZGame.Instance.FrontEnd.PromoCodes[4].Redeemed)) ? Color.White : Color.Gray);
 			base.OnUpdate(game, gameTime);
 		}
 	}

@@ -184,7 +184,7 @@ namespace DNA.CastleMinerZ
 			Random random = new Random();
 			WorldInfo worldInfo = new WorldInfo();
 			int seed = 839880689;
-			if (!Guide.IsTrialMode)
+			if (!false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				seed = random.Next();
 			}

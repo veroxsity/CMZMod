@@ -305,7 +305,7 @@ namespace DNA.CastleMinerZ.UI
 				else
 				{
 					InventoryItem inventoryItem = _selectedRecipe.Result.ItemClass.CreateItem(_selectedRecipe.Result.StackCount);
-					if (inventoryItem is GunInventoryItem && Guide.IsTrialMode)
+					if (inventoryItem is GunInventoryItem && false /* Guide.IsTrialMode patched out for RGH */)
 					{
 						_game.GameScreen._uiGroup.ShowDialogScreen(_buyToCraftDialog, delegate
 						{
@@ -361,7 +361,7 @@ namespace DNA.CastleMinerZ.UI
 					else
 					{
 						InventoryItem inventoryItem2 = _selectedRecipe.Result.ItemClass.CreateItem(_selectedRecipe.Result.StackCount);
-						if (inventoryItem2 is GunInventoryItem && Guide.IsTrialMode)
+						if (inventoryItem2 is GunInventoryItem && false /* Guide.IsTrialMode patched out for RGH */)
 						{
 							_game.GameScreen._uiGroup.ShowDialogScreen(_buyToCraftDialog, delegate
 							{

@@ -80,11 +80,11 @@ namespace DNA.CastleMinerZ.UI
 
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
 		{
-			bool flag = Screen.CurrentGamer.Privileges.AllowOnlineSessions && !Guide.IsTrialMode;
+			bool flag = Screen.CurrentGamer.Privileges.AllowOnlineSessions && !false /* Guide.IsTrialMode patched out for RGH */;
 			SignedInGamer currentGamer = Screen.CurrentGamer;
-			purchaseControl.Visible = Guide.IsTrialMode;
-			achievementControl.Visible = !Guide.IsTrialMode;
-			reedemControl.TextColor = (Guide.IsTrialMode ? Color.Gray : Color.White);
+			purchaseControl.Visible = false /* Guide.IsTrialMode patched out for RGH */;
+			achievementControl.Visible = !false /* Guide.IsTrialMode patched out for RGH */;
+			reedemControl.TextColor = (false /* Guide.IsTrialMode patched out for RGH */ ? Color.Gray : Color.White);
 			hostOnlineControl.TextColor = (flag ? Color.White : Color.Gray);
 			joinOnlineControl.TextColor = (flag ? Color.White : Color.Gray);
 			base.OnUpdate(game, gameTime);

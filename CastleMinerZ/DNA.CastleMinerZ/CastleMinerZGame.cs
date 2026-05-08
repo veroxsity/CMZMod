@@ -480,7 +480,7 @@ namespace DNA.CastleMinerZ
 			base.ScreenManager.PopScreen();
 			base.ScreenManager.PushScreen(FrontEnd);
 			texture2D.Dispose();
-			IsPurchased = !Guide.IsTrialMode;
+			IsPurchased = !false /* Guide.IsTrialMode patched out for RGH */;
 			NetworkSession.InviteAccepted += NetworkSession_InviteAccepted;
 			ModRegistry.Initialize();
 			base.SecondaryLoad();
@@ -489,7 +489,7 @@ namespace DNA.CastleMinerZ
 		private void NetworkSession_InviteAccepted(object sender, InviteAcceptedEventArgs e)
 		{
 			Screen.SelectedPlayerIndex = e.Gamer.PlayerIndex;
-			if (Guide.IsTrialMode)
+			if (false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				ShowMarketPlace();
 				return;
@@ -762,7 +762,7 @@ namespace DNA.CastleMinerZ
 			}
 			if (PlayerStats != null)
 			{
-				if (Guide.IsTrialMode)
+				if (false /* Guide.IsTrialMode patched out for RGH */)
 				{
 					PlayerStats.TimeInTrial += gameTime.ElapsedGameTime;
 				}

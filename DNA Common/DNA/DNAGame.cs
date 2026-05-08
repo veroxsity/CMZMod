@@ -735,7 +735,7 @@ namespace DNA
 
 		private void EvalCodes()
 		{
-			if (Guide.IsTrialMode)
+			if (false /* Guide.IsTrialMode patched out for RGH */)
 			{
 				return;
 			}
