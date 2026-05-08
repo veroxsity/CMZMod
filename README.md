@@ -15,10 +15,10 @@ After setup, the loop is:
 
 ## Status
 
-- ✅ Pipeline runs end-to-end
-- ✅ Custom builds load on real RGH hardware
-- ✅ **Mod framework (Phase 1):** ModAPI, recipe modding, build-time mod pipeline
-- 🚧 Texture and asset modding documented but not yet polished
+- ✅ Pipeline runs end-to-end.
+- ✅ Custom builds load on real RGH hardware.
+- ✅ **Mod framework (Phase 1):** ModAPI, recipe modding, build-time mod pipeline.
+- 🚧 Texture and asset modding documented but not yet polished.
 
 If you've got an RGH and want to get involved with active modding work, hop in: **https://discord.gg/by5JD9dcEn**
 
