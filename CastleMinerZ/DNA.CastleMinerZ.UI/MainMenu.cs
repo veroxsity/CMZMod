@@ -80,7 +80,7 @@ namespace DNA.CastleMinerZ.UI
 
 		protected override void OnUpdate(DNAGame game, GameTime gameTime)
 		{
-			bool flag = Screen.CurrentGamer.Privileges.AllowOnlineSessions && !false /* Guide.IsTrialMode patched out for RGH */;
+			bool flag = true /* AllowOnlineSessions patched out for RGH */ && !false /* Guide.IsTrialMode patched out for RGH */;
 			SignedInGamer currentGamer = Screen.CurrentGamer;
 			purchaseControl.Visible = false /* Guide.IsTrialMode patched out for RGH */;
 			achievementControl.Visible = !false /* Guide.IsTrialMode patched out for RGH */;

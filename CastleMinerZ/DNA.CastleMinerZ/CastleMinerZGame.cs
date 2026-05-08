@@ -240,7 +240,7 @@ namespace DNA.CastleMinerZ
 			{
 				if (base.CurrentNetworkSession != null)
 				{
-					return base.CurrentNetworkSession.SessionType == NetworkSessionType.PlayerMatch;
+					return base.CurrentNetworkSession.SessionType == NetworkSessionType.SystemLink /* PlayerMatch->SystemLink for RGH (use XLink Kai for internet play) */;
 				}
 				return false;
 			}
@@ -560,7 +560,7 @@ namespace DNA.CastleMinerZ
 			}
 			else
 			{
-				HostGame(NetworkSessionType.PlayerMatch, networkSessionProperties, new SignedInGamer[1] { Screen.CurrentGamer }, 8, false, true, callback);
+				HostGame(NetworkSessionType.SystemLink /* PlayerMatch->SystemLink for RGH (use XLink Kai for internet play) */, networkSessionProperties, new SignedInGamer[1] { Screen.CurrentGamer }, 8, false, true, callback);
 			}
 		}
 
@@ -579,7 +579,7 @@ namespace DNA.CastleMinerZ
 				networkSessionProperties[6] = 0;
 				networkSessionProperties[3] = (int)GameMode;
 			}
-			NetworkSession.BeginFind(NetworkSessionType.PlayerMatch, new SignedInGamer[1] { Screen.CurrentGamer }, networkSessionProperties, delegate(IAsyncResult result)
+			NetworkSession.BeginFind(NetworkSessionType.SystemLink /* PlayerMatch->SystemLink for RGH (use XLink Kai for internet play) */, new SignedInGamer[1] { Screen.CurrentGamer }, networkSessionProperties, delegate(IAsyncResult result)
 			{
 				AvailableNetworkSessionCollection sessions = null;
 				try
@@ -787,7 +787,7 @@ namespace DNA.CastleMinerZ
 				{
 					PlayerStats.TimeInMenu += gameTime.ElapsedGameTime;
 				}
-				if (base.CurrentNetworkSession != null && base.CurrentNetworkSession.SessionType == NetworkSessionType.PlayerMatch && Instance.GameMode == GameModeTypes.Endurance)
+				if (base.CurrentNetworkSession != null && base.CurrentNetworkSession.SessionType == NetworkSessionType.SystemLink /* PlayerMatch->SystemLink for RGH (use XLink Kai for internet play) */ && Instance.GameMode == GameModeTypes.Endurance)
 				{
 					PlayerStats.TimeOnline += gameTime.ElapsedGameTime;
 				}

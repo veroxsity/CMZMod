@@ -629,7 +629,7 @@ namespace DNA.CastleMinerZ
 				{
 					_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 				}
-				else if (Screen.CurrentGamer.Privileges.AllowOnlineSessions)
+				else if (true /* AllowOnlineSessions patched out for RGH */)
 				{
 					_localGame = false;
 					_hostGame = true;
@@ -645,7 +645,7 @@ namespace DNA.CastleMinerZ
 				{
 					_game.ShowMarketPlace(Screen.SelectedPlayerIndex.Value);
 				}
-				else if (Screen.CurrentGamer.Privileges.AllowOnlineSessions)
+				else if (true /* AllowOnlineSessions patched out for RGH */)
 				{
 					_localGame = false;
 					_hostGame = false;
