@@ -1,0 +1,8 @@
+{
+    "id": "example.cheap-torches",
+    "name": "Cheap Torches",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Makes torches craftable from 1 stick (no coal required)",
+    "modapi_version": "1"
+}

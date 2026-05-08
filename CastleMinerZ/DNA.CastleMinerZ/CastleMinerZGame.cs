@@ -6,6 +6,7 @@ using DNA.Audio;
 using DNA.Avatars;
 using DNA.CastleMinerZ.AI;
 using DNA.CastleMinerZ.Achievements;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.CastleMinerZ.Inventory;
 using DNA.CastleMinerZ.Net;
 using DNA.CastleMinerZ.Terrain;
@@ -481,6 +482,7 @@ namespace DNA.CastleMinerZ
 			texture2D.Dispose();
 			IsPurchased = !Guide.IsTrialMode;
 			NetworkSession.InviteAccepted += NetworkSession_InviteAccepted;
+			ModRegistry.Initialize();
 			base.SecondaryLoad();
 		}
 

@@ -17,7 +17,7 @@ After setup, the loop is:
 
 - ✅ Pipeline runs end-to-end
 - ✅ Custom builds load on real RGH hardware
-- ✅ Cosmetic mods, recipe mods, and stat tweaks work
+- ✅ **Mod framework (Phase 1):** ModAPI, recipe modding, build-time mod pipeline
 - 🚧 Texture and asset modding documented but not yet polished
 
 If you've got an RGH and want to get involved with active modding work, hop in: **https://discord.gg/by5JD9dcEn**
@@ -38,7 +38,8 @@ CMZMod/
 ├── fix_decompile_artifacts.py  Cleans up ~200 decompiler artifacts
 ├── stfs_extract.py             Standalone STFS unpacker
 ├── README.md                   This file
-└── MODDING.md                  Modding guide (recipes, items, blocks, AI, etc.)
+├── MODDING.md                  Direct-source modding guide (advanced)
+└── framework_modding.md        Mod framework guide (recommended for new modders)
 ```
 
 **What's NOT in this repo** (and never will be, for copyright reasons):
@@ -132,10 +133,14 @@ Trigger a content rescan in FSD/Aurora, launch the game, and look for the lime-g
 
 ## Daily workflow
 
-```powershell
-# 1. Edit some C# (e.g. tweak a recipe in CastleMinerZ\DNA.CastleMinerZ.Inventory\Receipe.cs)
+### Mod framework (recommended)
 
-# 2. Rebuild + repack
+Drop mod folders into `mods/` — each folder is a self-contained mod. No source tree edits needed.
+
+```powershell
+# 1. Create or edit a mod in mods/your-mod/ (mod.json + .cs files)
+
+# 2. Rebuild + repack (discovers mods automatically)
 .\deploy.ps1 -Pack
 
 # 3. FTP CMZModded.stfs to the console (overwriting previous)
@@ -143,7 +148,20 @@ Trigger a content rescan in FSD/Aurora, launch the game, and look for the lime-g
 # 4. Launch and test
 ```
 
-After the first run, step 2 takes about 5 seconds (only your changed source recompiles).
+See **[framework_modding.md](framework_modding.md)** for the full walkthrough.
+
+### Direct source editing (advanced)
+
+```powershell
+# 1. Edit game source directly (e.g. tweak a recipe in Receipe.cs)
+
+# 2. Rebuild + repack
+.\deploy.ps1 -Pack
+
+# 3. FTP, launch, test
+```
+
+The pipeline automatically detects when mods/ is empty and builds from source directly.
 
 ### Useful flags
 
@@ -156,21 +174,19 @@ After the first run, step 2 takes about 5 seconds (only your changed source reco
 
 ## Modding
 
-See **[MODDING.md](MODDING.md)** for a 600-line guide covering:
+Two approaches, pick the one that fits:
 
-- Cosmetic mods (UI text, build marker, version strings)
-- Recipe mods (the easiest "real" mod)
-- Stat tweaks (weapon damage, enemy health, balance)
-- Editing existing textures (`xnbcli` workflow)
-- Adding new items (full Diamond Pickaxe walkthrough)
-- Adding new blocks
-- AI behaviour and spawn tweaks
-- New enemies
-- Audio replacement (XACT)
-- Multiplayer compatibility (the protocol-version trap)
-- Debugging mods that don't work
+### Framework modding (no source edits)
 
-Recommended first mod: change the `BuildTag` constant in `CastleMinerZ\DNA.CastleMinerZ.UI\MainMenu.cs` to your own string. Build, deploy, see your custom text on the title screen. Confirms the loop, takes 30 seconds.
+Use the **ModAPI** — write C# files in a `mods/` folder, drop in, build. The game source is never touched.
+
+Start here: **[framework_modding.md](framework_modding.md)**
+
+### Direct source editing (full control)
+
+Edit the game source directly for maximum flexibility. Covers everything the framework doesn't yet support (textures, audio, blocks, new enemies, etc.).
+
+See: **[MODDING.md](MODDING.md)**
 
 ---
 

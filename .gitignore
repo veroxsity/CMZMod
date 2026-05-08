@@ -97,6 +97,8 @@ env/
 ftp_creds.txt
 console_ip.txt
 .UntrackedLocal/
+build_temp/
+mods/
 
 # -----------------------------------------------------------------------------
 # OS / editor noise

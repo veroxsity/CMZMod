@@ -37,7 +37,7 @@ namespace DNA.CastleMinerZ.Inventory
 			CookBook = new List<Receipe>();
 			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.WoodBlock, 4), InventoryItem.CreateItem(InventoryItemIDs.LogBlock, 1)));
 			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.Stick, 4), InventoryItem.CreateItem(InventoryItemIDs.WoodBlock, 1)));
-			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.Torch, 4), InventoryItem.CreateItem(InventoryItemIDs.Stick, 1)));
+			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.Torch, 4), InventoryItem.CreateItem(InventoryItemIDs.Stick, 1), InventoryItem.CreateItem(InventoryItemIDs.Coal, 1)));
 			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.LanternBlock, 4), InventoryItem.CreateItem(InventoryItemIDs.Torch, 1), InventoryItem.CreateItem(InventoryItemIDs.Iron, 1), InventoryItem.CreateItem(InventoryItemIDs.SandBlock, 4), InventoryItem.CreateItem(InventoryItemIDs.Coal, 2)));
 			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.BrassCasing, 200), InventoryItem.CreateItem(InventoryItemIDs.Copper, 1)));
 			CookBook.Add(new Receipe(InventoryItem.CreateItem(InventoryItemIDs.IronCasing, 200), InventoryItem.CreateItem(InventoryItemIDs.Iron, 1)));
