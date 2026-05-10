@@ -12,7 +12,7 @@ namespace DNA.CastleMinerZ.Inventory
 	{
 		public const int MaxTrayItems = 8;
 
-		public const int Version = 1;
+		public const int Version = 2;
 
 		public const string Ident = "PINV";
 
@@ -89,7 +89,7 @@ namespace DNA.CastleMinerZ.Inventory
 		public void Save(BinaryWriter writer)
 		{
 			writer.Write("PINV");
-			writer.Write(1);
+			writer.Write(Version);
 			for (int i = 0; i < Inventory.Length; i++)
 			{
 				if (Inventory[i] == null)
@@ -122,7 +122,9 @@ namespace DNA.CastleMinerZ.Inventory
 			{
 				throw new Exception("Invalid Inv File");
 			}
-			if (reader.ReadInt32() != 1)
+			int version = reader.ReadInt32();
+			bool isV2 = version == 2;
+			if (version != 1 && version != 2)
 			{
 				throw new Exception("Wrong Inv Version");
 			}
@@ -130,7 +132,7 @@ namespace DNA.CastleMinerZ.Inventory
 			{
 				if (reader.ReadBoolean())
 				{
-					Inventory[i] = InventoryItem.Create(reader);
+					Inventory[i] = isV2 ? InventoryItem.CreateV2(reader) : InventoryItem.Create(reader);
 					if (Inventory[i] != null && !Inventory[i].IsValid())
 					{
 						Inventory[i] = null;
@@ -145,7 +147,7 @@ namespace DNA.CastleMinerZ.Inventory
 			{
 				if (reader.ReadBoolean())
 				{
-					InventoryTray[j] = InventoryItem.Create(reader);
+					InventoryTray[j] = isV2 ? InventoryItem.CreateV2(reader) : InventoryItem.Create(reader);
 					if (InventoryTray[j] != null && !InventoryTray[j].IsValid())
 					{
 						InventoryTray[j] = null;

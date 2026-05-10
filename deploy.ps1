@@ -219,6 +219,33 @@ if ($hasMods) {
         exit 1
     }
 
+    # -- Step 4b: Validate mod item IDs are unique and well-formed --------------
+    Write-Step "Validating mod item IDs"
+    $allItemIds = @{}
+    $idPattern = '^[a-z0-9_-]+\.[a-z0-9_-]+$'
+    foreach ($mod in $discoveredMods) {
+        $csFiles = Get-ChildItem (Join-Path $mod.SourcePath "*.cs") -File
+        foreach ($csFile in $csFiles) {
+            $content = Get-Content $csFile.FullName -Raw -Encoding UTF8
+            $matches = [regex]::Matches($content, 'Items\.Register\s*\(\s*"([^"]+)"')
+            foreach ($m in $matches) {
+                $itemId = $m.Groups[1].Value
+                if ($allItemIds.ContainsKey($itemId)) {
+                    Write-Bad ("Duplicate mod item ID '" + $itemId + "' registered by '" + $allItemIds[$itemId] + "' and '" + $mod.FolderName + "'")
+                    exit 1
+                }
+                if ($itemId -notmatch $idPattern) {
+                    Write-Bad ("Invalid mod item ID '" + $itemId + "' in " + $mod.FolderName + ". IDs must be namespaced (e.g. 'you.my-item') with only lowercase letters, digits, dashes, underscores.")
+                    exit 1
+                }
+                $allItemIds[$itemId] = $mod.FolderName
+            }
+        }
+    }
+    if ($allItemIds.Count -gt 0) {
+        Write-Ok ("  " + $allItemIds.Count + " mod item ID(s) validated")
+    }
+
     # -- Step 5: Prepare build paths ------------------------------------------
     $buildDnaOutput  = Join-Path $buildTemp "DNA Common\bin\$platform\$config\DNA.Common.dll"
     $buildCmzOutput  = Join-Path $buildTemp "CastleMinerZ\bin\$platform\$config\CastleMinerZ.exe"

@@ -74,7 +74,11 @@ namespace DNA.CastleMinerZ
 			}
 		}
 
-		public const int NetworkVersion = 24;
+		// Bumped from 24 to 100 by CMZMod framework. Mod-aware protocol
+		// (e.g. ChangeCarriedItemMessage now carries a mod ID string after the
+		// item enum). Modded clients/servers can only interop with each other,
+		// not with vanilla 1.6.3.
+		public const int NetworkVersion = 100;
 
 		private static Version GameVersion = new Version(1, 6, 3);
 

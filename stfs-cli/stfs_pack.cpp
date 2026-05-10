@@ -152,6 +152,15 @@ int main(int argc, char **argv) {
     pkg->metaData->titleID     = title_id;
     pkg->metaData->displayName = display_name;
     pkg->metaData->titleName   = title_name;
+
+    // Set unrestricted license so the dashboard treats this as a full
+    // game, not a trial. Without this, XBLA Indie titles hit the
+    // platform-level 8-minute trial timer regardless of in-game patches.
+    pkg->metaData->licenseData[0].type = Unrestricted;
+    pkg->metaData->licenseData[0].data = 0xFFFFFFFFFFFFFFFFULL;
+    pkg->metaData->licenseData[0].bits = 0;
+    pkg->metaData->licenseData[0].flags = 0;
+
     std::cout << "    title-id     = 0x" << title_id_hex(title_id) << "\n";
     std::cout << "    content-type = " << content_type << "\n";
     std::cout << "    wrap-folder  = " << (wrap_in_title_folder ? wrap_name : std::string("(none)")) << "\n";

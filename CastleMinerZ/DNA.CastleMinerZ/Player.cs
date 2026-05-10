@@ -530,13 +530,30 @@ namespace DNA.CastleMinerZ
 		public void Equip(InventoryItem item)
 		{
 			Reloading = false;
-			ChangeCarriedItemMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, item.ItemClass.ID);
+			ChangeCarriedItemMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, item.ItemClass.ID, item.ItemClass.ModItemId);
 		}
 
 		public void PutItemInHand(InventoryItemIDs itemID)
 		{
+			PutItemInHand(itemID, null);
+		}
+
+		public void PutItemInHand(InventoryItemIDs itemID, string modItemId)
+		{
 			RightHand.Children.Clear();
-			InventoryItem.InventoryItemClass inventoryItemClass = InventoryItem.GetClass(itemID);
+			InventoryItem.InventoryItemClass inventoryItemClass = null;
+
+			// Mod items use ID = BareHands as a placeholder enum slot. Resolve via
+			// the mod registry when a mod ID is supplied. Vanilla items resolve via
+			// the enum-based lookup as before.
+			if (!string.IsNullOrEmpty(modItemId))
+			{
+				inventoryItemClass = DNA.CastleMinerZ.ModAPI.Internal.ItemRegistry.GetClass(modItemId);
+			}
+
+			if (inventoryItemClass == null)
+				inventoryItemClass = InventoryItem.GetClass(itemID);
+
 			if (inventoryItemClass != null)
 			{
 				RightHand.Children.Add(inventoryItemClass.CreateEntity(ItemUse.Hand, IsLocal));
@@ -758,7 +775,7 @@ namespace DNA.CastleMinerZ
 		private void ProcessChangeCarriedItemMessage(Message message)
 		{
 			ChangeCarriedItemMessage changeCarriedItemMessage = (ChangeCarriedItemMessage)message;
-			PutItemInHand(changeCarriedItemMessage.ItemID);
+			PutItemInHand(changeCarriedItemMessage.ItemID, changeCarriedItemMessage.ModItemId);
 		}
 
 		private void ProcessDigMessage(Message message)

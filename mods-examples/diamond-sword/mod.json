@@ -1,0 +1,8 @@
+{
+    "id": "you.diamond-sword",
+    "name": "Diamond Sword",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "A craftable diamond sword that hits harder than vanilla weapons",
+    "modapi_version": "1"
+}

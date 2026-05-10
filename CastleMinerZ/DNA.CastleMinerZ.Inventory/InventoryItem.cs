@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using DNA.CastleMinerZ.AI;
+using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.CastleMinerZ.Terrain;
 using DNA.CastleMinerZ.UI;
 using DNA.Drawing;
@@ -19,6 +21,9 @@ namespace DNA.CastleMinerZ.Inventory
 		public abstract class InventoryItemClass
 		{
 			public InventoryItemIDs ID;
+			public string ModItemId;
+			public int ModIconIndex = -1;
+			public string IconTextureName;
 
 			protected string _name;
 
@@ -104,6 +109,12 @@ namespace DNA.CastleMinerZ.Inventory
 				}
 			}
 
+			public void SetName(string name) { _name = name; }
+			public void SetDescription(string d1, string d2) { _description1 = d1; _description2 = d2; }
+			public void SetCoolDown(TimeSpan cd) { _coolDownTime = cd; }
+			public void SetUseSound(string cue) { _useSoundCue = cue; }
+			public void SetAnimationMode(PlayerMode mode) { _playerMode = mode; }
+
 			public InventoryItemClass(InventoryItemIDs id, string name, string description1, string description2, int maxStack, TimeSpan coolDownTime)
 			{
 				_playerMode = PlayerMode.Generic;
@@ -148,6 +159,15 @@ namespace DNA.CastleMinerZ.Inventory
 
 			public void Draw2D(SpriteBatch batch, Rectangle destRect, Color color)
 			{
+				if (ModItemId != null)
+				{
+					if (_2DModImages == null)
+						FinishInitialization(batch.GraphicsDevice);
+					int idx = ModIconIndex;
+					batch.Draw(sourceRectangle: new Rectangle((idx & 7) * 64, idx / 8 * 64, 64, 64),
+						texture: _2DModImages, destinationRectangle: destRect, color: color);
+					return;
+				}
 				if (_2DImages == null)
 				{
 					FinishInitialization(batch.GraphicsDevice);
@@ -173,6 +193,7 @@ namespace DNA.CastleMinerZ.Inventory
 		protected static Dictionary<InventoryItemIDs, InventoryItemClass> AllItems = new Dictionary<InventoryItemIDs, InventoryItemClass>();
 
 		public static RenderTarget2D _2DImages = null;
+		public static RenderTarget2D _2DModImages = null;
 
 		private InventoryItemClass _class;
 
@@ -294,6 +315,21 @@ namespace DNA.CastleMinerZ.Inventory
 		{
 			InventoryItemClass inventoryItemClass = GetClass(id);
 			return inventoryItemClass.CreateEntity(use, attachedToLocalPlayer);
+		}
+
+		public static InventoryItemClass GetClass(IItemId id)
+		{
+			if (id.IsVanilla)
+				return AllItems[id.VanillaId];
+			InventoryItemClass cls = ModAPI.Internal.ItemRegistry.GetClass(id.ModId);
+			if (cls != null)
+				return cls;
+			return ModAPI.Internal.PlaceholderItemClass.Instance;
+		}
+
+		public static InventoryItem CreateItem(IItemId id, int stackCount)
+		{
+			return GetClass(id).CreateItem(stackCount);
 		}
 
 		public static void Initalize(ContentManager content)
@@ -472,6 +508,39 @@ namespace DNA.CastleMinerZ.Inventory
 				entity.Update(CastleMinerZGame.Instance, gameTime);
 				entity.Draw(device, gameTime, Matrix.Identity, projection);
 			}
+
+			// Render mod items into a separate atlas
+			int modItemCount = ItemRegistry.ModItemCount;
+			if (modItemCount > 0)
+			{
+				ItemRegistry.EnsureAllClassesCreated();
+				List<InventoryItemClass> modClasses = ItemRegistry.GetAllClasses();
+
+				int modAtlasHeight = ((modClasses.Count + 7) / 8) * 64;
+				if (modAtlasHeight < 64)
+					modAtlasHeight = 64;
+
+				_2DModImages = new RenderTarget2D(CastleMinerZGame.Instance.GraphicsDevice, 512, modAtlasHeight, false, SurfaceFormat.Color, DepthFormat.Depth16);
+				device.SetRenderTarget(_2DModImages);
+				device.Clear(ClearOptions.DepthBuffer | ClearOptions.Target, color, 1f, 0);
+				device.Viewport = new Viewport(0, 0, 512, modAtlasHeight);
+				device.RasterizerState = RasterizerState.CullCounterClockwise;
+				device.DepthStencilState = DepthStencilState.Default;
+				Matrix modProjection = Matrix.CreateOrthographic(512f, modAtlasHeight, 0.1f, 500f);
+				BlockEntity.InitUIRendering(modProjection);
+
+				for (int i = 0; i < modClasses.Count; i++)
+				{
+					modClasses[i].ModIconIndex = i;
+					Entity entity = modClasses[i].CreateEntity(ItemUse.UI, false);
+					Vector3 vector = new Vector3(-256 + (i & 7) * 64 + 32, -modAtlasHeight / 2 + i / 8 * 64 + 32, -200f);
+					vector.Y = 0f - vector.Y;
+					entity.LocalPosition += vector;
+					entity.Update(CastleMinerZGame.Instance, gameTime);
+					entity.Draw(device, gameTime, Matrix.Identity, modProjection);
+				}
+			}
+
 			device.SetRenderTarget(null);
 			device.Viewport = viewport;
 			device.RasterizerState = rasterizerState;
@@ -485,6 +554,30 @@ namespace DNA.CastleMinerZ.Inventory
 			inventoryItem = CreateItem(id, 0);
 			inventoryItem.Read(reader);
 			return inventoryItem;
+		}
+
+		public static InventoryItem CreateV2(BinaryReader reader)
+		{
+			short marker = reader.ReadInt16();
+			if (marker == -1)
+			{
+				string modItemId = reader.ReadString();
+				InventoryItemClass cls = ItemRegistry.GetClass(modItemId);
+				if (cls == null || cls == PlaceholderItemClass.Instance)
+				{
+					ModLog.Warn("Save references mod item '" + modItemId + "' but mod is not loaded. Skipping slot.");
+					reader.ReadInt16();
+					reader.ReadSingle();
+					return null;
+				}
+				InventoryItem item = cls.CreateItem(0);
+				item.Read(reader);
+				return item;
+			}
+			InventoryItemIDs id = (InventoryItemIDs)marker;
+			InventoryItem inventoryItem2 = CreateItem(id, 0);
+			inventoryItem2.Read(reader);
+			return inventoryItem2;
 		}
 
 		public virtual bool IsValid()
@@ -723,7 +816,15 @@ namespace DNA.CastleMinerZ.Inventory
 
 		public virtual void Write(BinaryWriter writer)
 		{
-			writer.Write((short)_class.ID);
+			if (_class.ModItemId != null)
+			{
+				writer.Write((short)(-1));
+				writer.Write(_class.ModItemId);
+			}
+			else
+			{
+				writer.Write((short)_class.ID);
+			}
 			writer.Write((short)StackCount);
 			writer.Write(ItemHealthLevel);
 		}
