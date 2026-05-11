@@ -2,6 +2,8 @@
 
 A working modding pipeline for **CastleMiner Z** (XBLIG, version 1.6.3) on RGH/JTAG Xbox 360 consoles.
 
+📖 **Docs site:** https://veroxsity.github.io/CMZMod/
+
 This repo contains decompiled C# source for CastleMiner Z's game and engine, working `.csproj` files for the XNA 4.0 / Xbox 360 toolchain, a build pipeline that handles both source-level and folder-based mods, and a custom CLI tool for repacking STFS LIVE containers.
 
 After setup, the daily loop is:
