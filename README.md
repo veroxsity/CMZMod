@@ -2,11 +2,11 @@
 
 A working modding pipeline for **CastleMiner Z** (XBLIG, version 1.6.3) on RGH/JTAG Xbox 360 consoles.
 
-This repo contains decompiled C# source for CastleMiner Z's game and engine, working `.csproj` files for the XNA 4.0 / Xbox 360 toolchain, scripts that automate the full build-and-package pipeline, and a custom CLI tool for repacking STFS LIVE containers.
+This repo contains decompiled C# source for CastleMiner Z's game and engine, working `.csproj` files for the XNA 4.0 / Xbox 360 toolchain, a build pipeline that handles both source-level and folder-based mods, and a custom CLI tool for repacking STFS LIVE containers.
 
-After setup, the loop is:
+After setup, the daily loop is:
 
-1. Edit C# source
+1. Edit C# source, or drop a mod folder into `mods/`
 2. Run one PowerShell command
 3. FTP the resulting `CMZModded.stfs` to your console
 4. Launch and test
@@ -15,12 +15,12 @@ After setup, the loop is:
 
 ## Status
 
-- ✅ Pipeline runs end-to-end.
-- ✅ Custom builds load on real RGH hardware.
-- ✅ **Mod framework (Phase 1):** ModAPI, recipe modding, build-time mod pipeline.
-- 🚧 Texture and asset modding documented but not yet polished.
+The pipeline runs end-to-end on real RGH hardware. Two ways to mod are supported:
 
-If you've got an RGH and want to get involved with active modding work, hop in: **https://discord.gg/by5JD9dcEn**
+- **Framework modding (recommended).** Write a self-contained mod as a folder in `mods/`, using the ModAPI. The game source is never touched. Currently supports recipe changes, custom items, item stat tweaks, and a fixed set of item behaviors (sword, pickaxe, spade, axe, block, consumable). See [docs/framework_modding.md](docs/framework_modding.md).
+- **Direct source editing (advanced).** Edit the decompiled C# in `CastleMinerZ\` directly. Full control over anything in the codebase. Texture and audio asset modding is documented but considerably harder than code-only mods. See [docs/source_modding.md](docs/source_modding.md).
+
+If you have an RGH and want to get involved: **https://discord.gg/by5JD9dcEn**
 
 ---
 
@@ -28,18 +28,22 @@ If you've got an RGH and want to get involved with active modding work, hop in: 
 
 ```
 CMZMod/
-├── CastleMinerZ/               Game source (~280 .cs files)
-├── DNA Common/                 Engine source (~440 .cs files) + .resx resources
-├── CastleMinerZ.sln            VS2010 solution
-├── stfs-cli/                   STFS LIVE container repacker (C++/Velocity-based)
-├── deploy.ps1                  Build + stage + repack in one command
-├── setup_assets.ps1            One-time: extracts assets from your retail STFS
-├── patch_mainmenu.ps1          Adds the visible build marker to MainMenu.cs
-├── fix_decompile_artifacts.py  Cleans up ~200 decompiler artifacts
-├── stfs_extract.py             Standalone STFS unpacker
-├── README.md                   This file
-├── MODDING.md                  Direct-source modding guide (advanced)
-└── framework_modding.md        Mod framework guide (recommended for new modders)
+├── CastleMinerZ/                Game source (~280 .cs files)
+│   └── ModAPI/                  The framework API mods compile against
+├── DNA Common/                  Engine source (~440 .cs files) + .resx resources
+├── CastleMinerZ.sln             VS2010 solution
+├── stfs-cli/                    STFS LIVE container repacker (C++/Velocity-based)
+├── mods-examples/               Ready-to-build example mods (copy into mods/ to try)
+├── docs/
+│   ├── framework_modding.md     Framework modding guide (start here)
+│   └── source_modding.md        Direct source editing guide (advanced)
+├── deploy.ps1                   Build + stage + repack in one command
+├── setup_assets.ps1             One-time: extracts assets from your retail STFS
+├── patch_mainmenu.ps1           Adds the visible build marker to MainMenu.cs
+├── patch_online_sessions.ps1    Adjusts online session compatibility
+├── fix_decompile_artifacts.py   Cleans up ~200 decompiler artifacts
+├── stfs_extract.py              Standalone STFS unpacker
+└── README.md                    This file
 ```
 
 **What's NOT in this repo** (and never will be, for copyright reasons):
@@ -65,7 +69,7 @@ You provide your own retail copy of the game (see [Setup](#setup) below).
 | XNA Framework Redistributable 4.0 Refresh | Runtime |
 | Python 3 | Used by helper scripts |
 | Git for Windows | Cloning + the STFS CLI's build script |
-| WinSCP | FTP to your RGH |
+| WinSCP (or any FTP client) | FTP to your RGH |
 | MinGW-w64 with g++ supporting C++20 | Required to build the STFS CLI |
 | Botan 3.x at `C:\botan\` | Crypto library the STFS CLI needs |
 
@@ -73,7 +77,7 @@ You provide your own retail copy of the game (see [Setup](#setup) below).
 
 - **A retail Castle Miner Z STFS file**, extracted from your own legitimately-acquired copy. ~33 MB, no extension, starts with magic bytes `LIVE`.
 - **An RGH/JTAG Xbox 360** with FreeStyle Dash or Aurora and FTP enabled.
-- **The XNA Framework Redistributable installed on your console** at `Hdd1:\Content\0000000000000000\FFFE07D1\` (every XBLIG title needs this; if your console runs other XBLIG games, you already have it).
+- **The XNA Framework Redistributable installed on your console** at `Hdd1:\Content\0000000000000000\FFFE07D1\`. Every XBLIG title needs this; if your console runs other XBLIG games, you already have it.
 
 ### Detailed install notes
 
@@ -81,7 +85,7 @@ You provide your own retail copy of the game (see [Setup](#setup) below).
 
 1. Get `XNAGS40_setup.exe` from a Microsoft archive
 2. Open it with **7-Zip** (treat the `.exe` as an archive)
-3. Inside is `redists.msi` — open *that* with 7-Zip
+3. Inside is `redists.msi`, open *that* with 7-Zip too
 4. Inside `redists.msi` are the actual installer MSIs, renamed without extensions. Use `tasklist.xml` (also inside) to see proper names
 5. Run each MSI individually as admin, **skipping `xnaliveproxy.msi`** (fails harmlessly)
 
@@ -89,7 +93,7 @@ After install, verify:
 - `C:\Program Files (x86)\Microsoft XNA\XNA Game Studio\v4.0\References\Xbox360\` exists with the framework DLLs
 - `C:\Program Files (x86)\MSBuild\Microsoft\XNA Game Studio\v4.0\` exists with the targets
 
-**MSBuild master targets file may be missing.** If you hit `MSB4057: target "Build" does not exist`, check if `Microsoft.Xna.GameStudio.targets` (singular, the dispatcher) is present at the MSBuild path above. If not, drop a stub there — see the troubleshooting section in [MODDING.md](MODDING.md).
+**MSBuild master targets file may be missing.** If you hit `MSB4057: target "Build" does not exist`, check if `Microsoft.Xna.GameStudio.targets` (singular, the dispatcher) is present at the MSBuild path above. If not, drop a stub there. See the troubleshooting section in [docs/source_modding.md](docs/source_modding.md).
 
 **Botan 3 is finicky.** The MSYS2 prebuilt Botan is the fastest path:
 
@@ -117,11 +121,11 @@ cd stfs-cli
 .\build_windows.bat
 cd ..
 
-# 3. Build the C# source AND repack into an STFS — one command
+# 3. Build the C# source AND repack into an STFS (one command)
 .\deploy.ps1 -Pack
 ```
 
-If `.\deploy.ps1 -Pack` succeeds, you'll have `CMZModded.stfs` in the project root. FTP it to:
+If `.\deploy.ps1 -Pack` succeeds you'll have `CMZModded.stfs` in the project root. FTP it to:
 
 ```
 Hdd1:\Content\0000000000000000\584E07D1\
@@ -133,12 +137,13 @@ Trigger a content rescan in FSD/Aurora, launch the game, and look for the lime-g
 
 ## Daily workflow
 
-### Mod framework (recommended)
+### Framework modding (recommended for new mods)
 
-Drop mod folders into `mods/` — each folder is a self-contained mod. No source tree edits needed.
+Drop mod folders into `mods/`. Each folder is a self-contained mod with a `mod.json` and one or more `.cs` files. No source tree edits needed.
 
 ```powershell
-# 1. Create or edit a mod in mods/your-mod/ (mod.json + .cs files)
+# 1. Create or copy a mod into mods/your-mod/
+#    (try one from mods-examples/ first)
 
 # 2. Rebuild + repack (discovers mods automatically)
 .\deploy.ps1 -Pack
@@ -148,9 +153,14 @@ Drop mod folders into `mods/` — each folder is a self-contained mod. No source
 # 4. Launch and test
 ```
 
-See **[framework_modding.md](framework_modding.md)** for the full walkthrough.
+Two working example mods ship in `mods-examples/`:
 
-### Direct source editing (advanced)
+- `cheap-torches/` modifies the torch recipe to 1 stick (no coal)
+- `diamond-sword/` registers a new craftable diamond sword item
+
+Copy either into `mods/`, build, and you have a working mod in minutes. Full walkthrough in **[docs/framework_modding.md](docs/framework_modding.md)**.
+
+### Direct source editing (full control)
 
 ```powershell
 # 1. Edit game source directly (e.g. tweak a recipe in Receipe.cs)
@@ -161,32 +171,34 @@ See **[framework_modding.md](framework_modding.md)** for the full walkthrough.
 # 3. FTP, launch, test
 ```
 
-The pipeline automatically detects when mods/ is empty and builds from source directly.
+The pipeline auto-detects when `mods/` is empty and builds straight from source.
 
 ### Useful flags
 
-- `.\deploy.ps1` — build only, no STFS repack. Good for verifying compile after a syntax-risky edit
-- `.\deploy.ps1 -Pack` — full pipeline; the daily-use flag
-- `.\deploy.ps1 -Release` — optimised "shipping" build (smaller .exe)
-- `.\deploy.ps1 -Clean` — wipe `bin/`/`obj/` first if you hit weird stale-build issues
+- `.\deploy.ps1` builds only, no STFS repack. Good for verifying compile after a syntax-risky edit.
+- `.\deploy.ps1 -Pack` is the daily-use flag (full pipeline).
+- `.\deploy.ps1 -Release` produces an optimised "shipping" build (smaller `.exe`).
+- `.\deploy.ps1 -Clean` wipes `bin/`/`obj/` first if you hit weird stale-build issues.
 
 ---
 
 ## Modding
 
-Two approaches, pick the one that fits:
+Pick the approach that fits what you want to do.
 
 ### Framework modding (no source edits)
 
-Use the **ModAPI** — write C# files in a `mods/` folder, drop in, build. The game source is never touched.
+Use the **ModAPI**: write C# files in a `mods/` folder, drop them in, build. The game source is never touched.
 
-Start here: **[framework_modding.md](framework_modding.md)**
+Start here: **[docs/framework_modding.md](docs/framework_modding.md)**.
+
+Currently covers: recipes (add, remove, modify, clear), custom items (with sword / pickaxe / spade / axe / block / consumable behaviors), and item stat tweaks (damage, max stack, cooldown, display name, description).
 
 ### Direct source editing (full control)
 
-Edit the game source directly for maximum flexibility. Covers everything the framework doesn't yet support (textures, audio, blocks, new enemies, etc.).
+Edit the game source directly for maximum flexibility. Covers everything the framework doesn't yet support: textures, audio, new blocks, custom enemies, multiplayer protocol changes, and so on.
 
-See: **[MODDING.md](MODDING.md)**
+See: **[docs/source_modding.md](docs/source_modding.md)**.
 
 ---
 
@@ -204,7 +216,7 @@ See: **[MODDING.md](MODDING.md)**
 
 ## How this got built
 
-Short version: I decompiled the retail 1.6.3 binaries with **ilspycmd** (forcing C# 4 syntax to match what the XNA 4.0 toolchain accepts), wrote working `.csproj` files based on XNA Xbox 360 templates (the SDK-style ones from older decompiles don't build), wrote a script to fix ~200 decompiler artifacts (`get_X()`/`set_X()` patterns), and built a CLI STFS repacker on top of [Velocity's](https://github.com/hetelek/Velocity) `XboxInternals` library — fixing three real upstream bugs along the way. See `stfs-cli/README.md` for the bugs and `MODDING.md` for the gotchas.
+Short version: the retail 1.6.3 binaries were decompiled with **ilspycmd** (forcing C# 4 syntax to match what the XNA 4.0 toolchain accepts), working `.csproj` files were rebuilt from XNA Xbox 360 templates (the SDK-style ones from older decompiles don't build), a script was written to fix ~200 decompiler artifacts (`get_X()`/`set_X()` patterns), and a CLI STFS repacker was built on top of [Velocity's](https://github.com/hetelek/Velocity) `XboxInternals` library, fixing three real upstream bugs along the way. See `stfs-cli/README.md` for the bugs and [docs/source_modding.md](docs/source_modding.md) for the gotchas.
 
 This isn't pretty, but it works. Pull requests welcome.
 
@@ -232,11 +244,11 @@ The XNA Framework Redist was published by Microsoft for free distribution as a r
 
 ## Credits & references
 
-- **EclipseKatrina's CMZ decompilation** — original 1.4.4 reference: https://github.com/EclipseKatrina/CastleMiner-Z-Decompilation
-- **Velocity** — STFS library: https://github.com/hetelek/Velocity
-- **ILSpy / ilspycmd** — decompiler used for the 1.6.3 source: https://github.com/icsharpcode/ILSpy
-- **Botan** — crypto library: https://botan.randombit.net/
-- **DigitalDNA Games** — original CastleMiner Z developers
+- **EclipseKatrina's CMZ decompilation**, original 1.4.4 reference: https://github.com/EclipseKatrina/CastleMiner-Z-Decompilation
+- **Velocity**, STFS library: https://github.com/hetelek/Velocity
+- **ILSpy / ilspycmd**, decompiler used for the 1.6.3 source: https://github.com/icsharpcode/ILSpy
+- **Botan**, crypto library: https://botan.randombit.net/
+- **DigitalDNA Games**, original CastleMiner Z developers
 
 CastleMiner Z is © DigitalDNA Games. This repository contains decompiled source code for educational and modding purposes only. Game assets are not included; you provide your own legitimately-acquired copy.
 

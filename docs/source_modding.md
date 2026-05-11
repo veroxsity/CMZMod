@@ -1,14 +1,16 @@
-# CastleMiner Z Modding Guide
+# CastleMiner Z Modding Guide: direct source editing
 
-This is the practical follow-up to `README.md`. The README gets you a working build pipeline; this document covers what to actually edit to make mods.
+This is the **advanced** modding guide. It covers editing the decompiled C# source directly. Anything the codebase exposes is fair game: textures, audio, blocks, custom enemies, AI behaviors, multiplayer protocol, save format. The trade-off is that mistakes touch the source tree, source-level mods are harder to share, and every change rebuilds from your local copy.
+
+**If you're new to CMZ modding, start with `framework_modding.md` instead.** The framework covers recipes, custom items, item stat tweaks, and a fixed set of item behaviors (sword, pickaxe, spade, axe, block, consumable) without ever touching the source. Most of sections 1, 2, 3, and 5 of this guide are also doable through the framework with a fraction of the friction. Direct source editing is the right answer for anything the framework doesn't yet support.
 
 The guide is organized by mod type, in roughly increasing order of difficulty:
 
-1. [Cosmetic mods (UI text, build marker, version strings)](#1-cosmetic-mods)
-2. [Recipe mods (add or change craftables)](#2-recipe-mods)
-3. [Stat tweaks (weapon damage, enemy health, balance changes)](#3-stat-tweaks)
+1. [Cosmetic mods (UI text, build marker, version strings)](#1-cosmetic-mods) (framework alternative for menu text exists in part)
+2. [Recipe mods (add or change craftables)](#2-recipe-mods) (use the framework's `Recipes` API instead)
+3. [Stat tweaks (weapon damage, enemy health, balance changes)](#3-stat-tweaks) (item stats: use the framework's `Items` setters)
 4. [Editing existing textures](#4-editing-existing-textures)
-5. [Adding new items](#5-adding-new-items)
+5. [Adding new items](#5-adding-new-items) (use the framework's `Items.Register` for code-only items)
 6. [Adding new blocks](#6-adding-new-blocks)
 7. [AI tweaks (enemy behavior, spawn rates)](#7-ai-and-spawn-tweaks)
 8. [New enemies (cloning and modifying existing AI types)](#8-new-enemies)
