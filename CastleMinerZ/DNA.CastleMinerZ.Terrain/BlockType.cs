@@ -1,4 +1,5 @@
 using System;
+using DNA.CastleMinerZ.ModAPI;
 
 namespace DNA.CastleMinerZ.Terrain
 {
@@ -11,6 +12,10 @@ namespace DNA.CastleMinerZ.Terrain
 		private const float cHardBounce = 0.6f;
 
 		private static readonly BlockType[] _blockTypes;
+
+		public const int MaxBlockTypes = 256;
+		public const int ModBlockSlotStart = 200;
+		public const int ModBlockSlotEnd = 255;
 
 		public BlockTypeEnum _type;
 
@@ -94,7 +99,7 @@ namespace DNA.CastleMinerZ.Terrain
 
 		static BlockType()
 		{
-			_blockTypes = new BlockType[46]
+			var vanilla = new BlockType[46]
 			{
 				new BlockType(BlockTypeEnum.Empty, "Air", 5, 1f, 0f, 1f, false, false, false, true, false, false, false, false, false, false, false, false, 0.6f, -1),
 				new BlockType(BlockTypeEnum.Dirt, "Dirt", 2, 0f, 0f, 0.8f, false, false, false, false, false, true, true, true, true, false, false, false, 0.4f, Octal._00),
@@ -143,6 +148,9 @@ namespace DNA.CastleMinerZ.Terrain
 				new BlockType(BlockTypeEnum.SpaceRockInventory, "Space Rock", 4, 0f, 0f, 0.1f, false, false, false, false, false, true, true, true, true, false, false, false, 0.6f, Octal._24),
 				new BlockType(BlockTypeEnum.NumberOfBlocks, "Air", 5, 1f, 0f, 1f, false, false, false, true, false, true, false, false, false, false, false, false, 0.6f, -1)
 			};
+			_blockTypes = new BlockType[256];
+			for (int i = 0; i < 46; i++)
+				_blockTypes[i] = vanilla[i];
 			_blockTypes[35].AllowSlopes = false;
 			_blockTypes[34].AllowSlopes = false;
 			_blockTypes[36].AllowSlopes = false;
@@ -165,7 +173,56 @@ namespace DNA.CastleMinerZ.Terrain
 
 		public static BlockType GetType(BlockTypeEnum t)
 		{
-			return _blockTypes[(int)t];
+			int idx = (int)t;
+			if (idx < 0 || idx >= _blockTypes.Length)
+			{
+				return _blockTypes[1]; // Dirt fallback (out-of-range slot)
+			}
+			BlockType bt = _blockTypes[idx];
+			if (bt == null)
+			{
+				return _blockTypes[1]; // Dirt fallback (unregistered slot 46-199)
+			}
+			return bt;
+		}
+
+		public static void RegisterModBlock(ModAPI.BlockDef def)
+		{
+			int slot = (int)def.Slot;
+			if (slot < 200 || slot > 255)
+				throw new ArgumentOutOfRangeException("def.Slot", "Mod block slot must be 200-255");
+			if (_blockTypes[slot] != null)
+				throw new InvalidOperationException("Block slot " + slot + " is already occupied");
+
+			int[] t = def.TileIndices ?? new int[6];
+			float lt = def.LightTransmission;
+			float si = def.SelfIllumination;
+			float dt = def.DamageTransmission;
+
+			_blockTypes[slot] = new BlockType(
+				def.Slot,
+				def.DisplayName ?? def.Id,
+				def.Hardness,
+				lt,
+				si,
+				dt,
+				def.IsItemEntity,
+				def.LightAsTranslucent,
+				def.InteriorFaces,
+				def.HasAlpha,
+				def.NeedsFancyLighting,
+				def.BlockPlayer,
+				def.CanBeTouched,
+				def.CanBuildOn,
+				def.CanBeDug,
+				def.DrawFullBright,
+				def.SpawnEntity,
+				def.BouncesLasers,
+				def.BounceRestitution,
+				t[4], t[0], t[3], t[5], t[2], t[1]);
+			_blockTypes[slot].AllowSlopes = def.AllowSlopes;
+			_blockTypes[slot].Facing = def.Facing;
+			_blockTypes[slot].ParentBlockType = def.ParentBlockType;
 		}
 
 		public int TransmitLight(int inlight)

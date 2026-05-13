@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using DNA.CastleMinerZ.Inventory;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.CastleMinerZ.Terrain.WorldBuilders;
 using DNA.IO;
 using DNA.IO.Storage;
@@ -326,6 +327,7 @@ namespace DNA.CastleMinerZ
 				info.Load(reader);
 				info._savePath = folder;
 			});
+			ModAPI.Data.LoadAll(saveDevice, folder);
 			return info;
 		}
 

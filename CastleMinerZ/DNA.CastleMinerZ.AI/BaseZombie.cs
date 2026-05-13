@@ -6,6 +6,7 @@ using DNA.CastleMinerZ.Terrain;
 using DNA.CastleMinerZ.UI;
 using DNA.CastleMinerZ.Utils.Trace;
 using DNA.Drawing;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.Drawing.Animation;
 using DNA.Profiling;
 using Microsoft.Xna.Framework;
@@ -245,6 +246,14 @@ namespace DNA.CastleMinerZ.AI
 					CastleMinerZGame.Instance.PlayerStats.EnemiesKilledWithGrenade++;
 				}
 				KillEnemyMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, EnemyID, Target.Gamer.Id, shooterID, itemID);
+				Events.FireEnemyKilled(new EnemyKilledEventArgs
+				{
+					Enemy = this,
+					KillingItemID = (InventoryItemIDs)(int)itemID,
+					ShooterID = shooterID,
+					DeathPosition = base.WorldPosition,
+					EnemyTypeName = EType.GetType().Name,
+				});
 			}
 			else if (StateMachine._currentState != EType.GetHitState(this))
 			{
@@ -275,6 +284,14 @@ namespace DNA.CastleMinerZ.AI
 					CastleMinerZGame.Instance.PlayerStats.EnemiesKilledWithLaserWeapon++;
 				}
 				KillEnemyMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, EnemyID, Target.Gamer.Id, shooterID, itemClass.ID);
+				Events.FireEnemyKilled(new EnemyKilledEventArgs
+				{
+					Enemy = this,
+					KillingItemID = itemClass.ID,
+					ShooterID = shooterID,
+					DeathPosition = damagePosition,
+					EnemyTypeName = EType.GetType().Name,
+				});
 			}
 			else if (StateMachine._currentState != EType.GetHitState(this))
 			{

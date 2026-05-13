@@ -1,0 +1,8 @@
+{
+    "id": "example.craft-logger",
+    "name": "Craft Logger",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Prints every crafting event to the console",
+    "modapi_version": "1"
+}

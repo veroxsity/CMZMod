@@ -1,0 +1,8 @@
+{
+    "id": "example.marble-block",
+    "name": "Marble Block",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Adds a craftable marble building block made from stone",
+    "modapi_version": "1"
+}

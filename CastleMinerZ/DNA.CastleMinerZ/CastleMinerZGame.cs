@@ -6,6 +6,7 @@ using DNA.Audio;
 using DNA.Avatars;
 using DNA.CastleMinerZ.AI;
 using DNA.CastleMinerZ.Achievements;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.CastleMinerZ.Inventory;
 using DNA.CastleMinerZ.Net;
@@ -656,6 +657,7 @@ namespace DNA.CastleMinerZ
 					_saving = true;
 					Thread.CurrentThread.SetProcessorAffinity(SaveProcessorAffinity);
 					SavePlayerStats(saveDataInfo.PlayerStats);
+					ModAPI.Data.SaveAll(SaveDevice, saveDataInfo.Worldinfo.SavePath);
 					if (saveDataInfo.Worldinfo.OwnerGamerTag != null)
 					{
 						saveDataInfo.Worldinfo.LastPlayedDate = DateTime.Now;
@@ -801,6 +803,7 @@ namespace DNA.CastleMinerZ
 				RequestEndGame = false;
 				EndGame(true);
 			}
+			Events.FireGameTick(new GameTickEventArgs { GameTime = gameTime });
 			base.Update(gameTime);
 		}
 

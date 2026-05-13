@@ -1,0 +1,8 @@
+{
+    "id": "example.god-mode",
+    "name": "God Mode",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Negates all player damage — you are invincible",
+    "modapi_version": "1"
+}

@@ -6,6 +6,7 @@ using DNA.CastleMinerZ.AI;
 using DNA.CastleMinerZ.Inventory;
 using DNA.CastleMinerZ.Net;
 using DNA.CastleMinerZ.Terrain;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.Drawing;
 using DNA.Drawing.Particles;
 using DNA.Drawing.UI;
@@ -226,6 +227,17 @@ namespace DNA.CastleMinerZ.UI
 		{
 			if (!LocalPlayer.Dead)
 			{
+				var args = new PlayerDamageEventArgs
+				{
+					DamageAmount = damageAmount,
+					DamageSource = damageSource,
+					Player = LocalPlayer,
+				};
+				Events.FirePlayerTakeDamage(args);
+				if (args.Cancel)
+					return;
+				damageAmount = args.DamageAmount;
+
 				_damageIndicator.Add(new DamageIndicator(damageSource));
 				SoundManager.Instance.PlayInstance("Hit");
 				HealthRecoverTimer.Reset();
@@ -310,6 +322,8 @@ namespace DNA.CastleMinerZ.UI
 					BroadcastTextMessage.Send(_game.MyNetworkGamer, LocalPlayer.Gamer.Gamertag + " Has Respawned");
 				}
 			}
+
+			Events.FirePlayerRespawn(new PlayerRespawnEventArgs { Player = LocalPlayer });
 		}
 
 		public bool AllPlayersDead()
@@ -1076,6 +1090,14 @@ namespace DNA.CastleMinerZ.UI
 				{
 					PickupManager.Instance.CreatePickup(inventoryItem, IntVector3.ToVector3(ConstructionProbe._worldIndex) + new Vector3(0.5f, 0.5f, 0.5f), false);
 				}
+				Events.FirePlayerMinedBlock(new PlayerMinedBlockEventArgs
+				{
+					BlockType     = block,
+					BlockPosition = ConstructionProbe._worldIndex,
+					Drop          = inventoryItem,
+					Tool          = tool,
+					Player        = LocalPlayer,
+				});
 				AlterBlockMessage.Send((LocalNetworkGamer)LocalPlayer.Gamer, ConstructionProbe._worldIndex, BlockTypeEnum.Empty);
 				for (BlockFace blockFace = BlockFace.POSX; blockFace < BlockFace.NUM_FACES; blockFace++)
 				{

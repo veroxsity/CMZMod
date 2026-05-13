@@ -1,0 +1,8 @@
+{
+    "id": "example.double-drops",
+    "name": "Double Drops",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Logs every block destroyed and grants extra drops for ore blocks",
+    "modapi_version": "1"
+}

@@ -188,6 +188,7 @@ if ($hasMods) {
             $regLines += ''
             $regLines += '            try'
             $regLines += '            {'
+            $regLines += '                ModRegistry.CurrentLoadingModId = "' + $modId + '";'
             $regLines += '                ' + $fullClassName + '.OnLoad();'
             $regLines += '                ModLog.Loaded("' + $modId + '", "' + $modVer + '");'
             $regLines += '                ModRegistry.LoadedModIds.Add("' + $modId + '");'
@@ -196,6 +197,10 @@ if ($hasMods) {
             $regLines += '            {'
             $regLines += '                ModLog.Error("Mod ' + $modId + ' failed: " + ex.Message);'
             $regLines += '                ModRegistry.FailedModIds.Add("' + $modId + '");'
+            $regLines += '            }'
+            $regLines += '            finally'
+            $regLines += '            {'
+            $regLines += '                ModRegistry.CurrentLoadingModId = null;'
             $regLines += '            }'
         }
     }
@@ -377,7 +382,7 @@ if ($Pack) {
     Write-Ok "Path: $stfsOut"
     Write-Host ""
     Write-Host "Next: FTP CMZModded.stfs to your RGH at:" -ForegroundColor Yellow
-    Write-Host "  Hdd1:\Content\0000000000000000\584E07D1\"
+    Write-Host "  Hdd1:\Content\0000000000000000\584E07D1\00000002"
 } else {
     Write-Host ""
     Write-Host "Tip: pass -Pack to also repack into an STFS LIVE container" -ForegroundColor DarkGray

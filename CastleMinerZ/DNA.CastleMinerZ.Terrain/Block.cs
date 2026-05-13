@@ -190,7 +190,7 @@ namespace DNA.CastleMinerZ.Terrain
 		public static BlockTypeEnum GetTypeIndex(int data)
 		{
 			uint num = (uint)(data & 0x7FFFF000) >> 12;
-			if (num > 45)
+			if (num > 255)
 			{
 				return BlockTypeEnum.Dirt;
 			}
@@ -205,18 +205,22 @@ namespace DNA.CastleMinerZ.Terrain
 		public static int SetType(int data, BlockTypeEnum value)
 		{
 			uint num = (uint)value;
-			if (num > 45)
+			if (num > 255)
 			{
 				num = 1u;
 			}
 			int num2 = (data & -2147479553) | (int)(num << 12);
 			BlockType type = BlockType.GetType((BlockTypeEnum)num);
-			num2 = ((!type.Opaque) ? (num2 & -513) : (num2 | 0x200));
-			if (type.HasAlpha)
+			if (type != null)
 			{
-				return num2 | 0x800;
+				num2 = ((!type.Opaque) ? (num2 & -513) : (num2 | 0x200));
+				if (type.HasAlpha)
+				{
+					return num2 | 0x800;
+				}
+				return num2 & -2049;
 			}
-			return num2 & -2049;
+			return num2;
 		}
 	}
 }

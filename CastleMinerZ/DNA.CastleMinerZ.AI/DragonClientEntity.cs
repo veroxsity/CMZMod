@@ -6,6 +6,7 @@ using DNA.CastleMinerZ.Net;
 using DNA.CastleMinerZ.Terrain;
 using DNA.CastleMinerZ.UI;
 using DNA.CastleMinerZ.Utils.Trace;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.Drawing;
 using DNA.Drawing.Animation;
 using DNA.Drawing.Particles;
@@ -349,6 +350,14 @@ namespace DNA.CastleMinerZ.AI
 				if (Health <= 0f)
 				{
 					KillDragonMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, base.WorldPosition, shooterID, itemClass.ID);
+					Events.FireEnemyKilled(new EnemyKilledEventArgs
+					{
+						Enemy = null,
+						KillingItemID = itemClass.ID,
+						ShooterID = shooterID,
+						DeathPosition = base.WorldPosition,
+						EnemyTypeName = "Dragon",
+					});
 				}
 			}
 		}
@@ -370,6 +379,14 @@ namespace DNA.CastleMinerZ.AI
 					CastleMinerZGame.Instance.PlayerStats.DragonsKilledWithGuidedMissile++;
 				}
 				KillDragonMessage.Send((LocalNetworkGamer)CastleMinerZGame.Instance.LocalPlayer.Gamer, base.WorldPosition, shooterID, itemID);
+				Events.FireEnemyKilled(new EnemyKilledEventArgs
+				{
+					Enemy = null,
+					KillingItemID = (InventoryItemIDs)(int)itemID,
+					ShooterID = shooterID,
+					DeathPosition = base.WorldPosition,
+					EnemyTypeName = "Dragon",
+				});
 			}
 		}
 

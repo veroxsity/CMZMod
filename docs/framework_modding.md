@@ -380,6 +380,295 @@ if (id.IsVanilla) {
 
 ---
 
+### `Blocks`
+
+Register new block types in the world. Mod blocks take up slots 200 to 255 in the block type table (vanilla uses 0 to 45, the rest is reserved). You can register up to 56 mod blocks.
+
+#### Register a new block
+
+```csharp
+Blocks.Register("you.marble", new BlockDef {
+    DisplayName       = "Marble",
+    Hardness          = 4,                              // 1 fast, 5 unbreakable
+    LightTransmission = 0.2f,                           // 0 opaque, 1 fully transparent
+    SelfIllumination  = 0.1f,                           // 0 dark, 1 fully lit
+    TileIndices       = new int[6] { 0, 0, 0, 0, 0, 0 },
+    BlockPlayer       = true,
+    CanBeDug          = true,
+});
+```
+
+Once registered, the block type exists in the world but nothing places it yet. To make it placeable, register an inventory item with the Block behavior using the same ID:
+
+```csharp
+Items.Register("you.marble", new ItemDef {
+    DisplayName   = "Marble Block",
+    Description1  = "A polished block of marble",
+    BehaviorClass = ItemBehaviors.Block,
+});
+```
+
+The item resolves the block slot by matching the ID string. As long as the block ID and the item ID are the same, you don't need to wire them up explicitly.
+
+Add a recipe:
+
+```csharp
+Recipes.Add("you.marble", 4,
+    InventoryItemIDs.RockBlock, InventoryItemIDs.RockBlock,
+    InventoryItemIDs.RockBlock, InventoryItemIDs.RockBlock);
+```
+
+Craft, place, mine, get marble back. That's the full setup.
+
+#### Modify a vanilla block
+
+```csharp
+Blocks.Modify(BlockTypeEnum.Rock, def => {
+    def.Hardness = 2;   // easier to mine
+});
+```
+
+Or modify another mod's block (e.g. a balance patch):
+
+```csharp
+Blocks.Modify("someone.marble", def => {
+    def.Hardness = 3;
+});
+```
+
+### `BlockDef` reference
+
+All fields are public properties on a data class:
+
+| Field | Type | Notes |
+|---|---|---|
+| `DisplayName` | `string` | Name shown in tooltips and the mining UI |
+| `Hardness` | `int` | 1 to 5. Controls dig time. 5 is unbreakable. |
+| `LightTransmission` | `float` | 0 opaque, 1 fully transparent (like glass) |
+| `SelfIllumination` | `float` | 0 dark, 1 emits full light (like a lantern) |
+| `TileIndices` | `int[6]` | Texture indices for each face. See note below. |
+| `BlockPlayer` | `bool` | True if the player collides with it |
+| `CanBeDug` | `bool` | False for decorative blocks you can't mine |
+| `CanBeTouched` | `bool` | Whether the cursor can target it |
+| `CanBuildOn` | `bool` | Whether other blocks can be placed on top |
+| `HasAlpha` | `bool` | True for blocks with transparent pixels in their texture |
+| `DrawFullBright` | `bool` | Ignore lighting, always render at full brightness |
+| `BouncesLasers` | `bool` | Laser sword projectiles reflect off this |
+| `BounceRestitution` | `float` | How much energy is preserved on bounce |
+| `SpawnEntity` | `bool` | Spawns as a falling entity rather than a static block |
+| `DamageTransmission` | `float` | 0 absorbs all explosive damage, 1 lets it all through |
+| `IsItemEntity` | `bool` | Used for pickups (dropped items, not placed blocks) |
+| `LightAsTranslucent` | `bool` | Light passes through but the block is still visually opaque |
+| `NeedsFancyLighting` | `bool` | Use the higher quality lighting path |
+| `InteriorFaces` | `bool` | Render faces inside the block (used for water, lava) |
+| `AllowSlopes` | `bool` | Whether ramps and slopes can connect to this block |
+| `Facing` | `BlockFace` | Default rotation when placed. `BlockFace.NUM_FACES` for none. |
+| `ParentBlockType` | `BlockTypeEnum` | Controls what drops when mined. Defaults to itself. |
+
+**On `TileIndices`:** these reference the existing vanilla texture atlas. Index 0 is dirt, 2 is the grass top, 5 is rock, and so on. To use your own art you currently need to drop into direct source editing and extend the atlas. The framework only handles slot allocation for now, not atlas extension.
+
+**On `ParentBlockType`:** vanilla CMZ stores "what does this block drop when mined" via the ParentBlockType field. Rock points to Rock, Dirt to Dirt, etc. For mod blocks the framework defaults this to the block's own slot, so mining marble gives you a marble item. If you want a fake stone block that drops Rock when mined, set `ParentBlockType = BlockTypeEnum.Rock` explicitly.
+
+**On `Hardness`:** dig time for mod blocks is Hardness seconds, regardless of which pickaxe you're using. So 1 is fast, 4 is slow, 5 is effectively unbreakable. Tier aware dig times for mod blocks aren't wired up yet. If you want a wood pick to be slower than a diamond pick on your block specifically, you'd need to extend the pickaxe switch tables directly in source.
+
+---
+
+### `Events`
+
+Subscribe to gameplay events to react when stuff happens in the world. Subscribe inside `OnLoad()`:
+
+```csharp
+public static void OnLoad()
+{
+    Events.PlayerTakeDamage += OnDamage;
+    Events.BlockDestroyed   += OnBlockDestroyed;
+}
+```
+
+Each event hands you an args object with everything relevant. If a handler throws, the framework catches it and logs the error. Other handlers still run.
+
+#### `Events.PlayerTakeDamage`
+
+Fires every time the local player takes damage from anything (zombies, falls, lava, explosions).
+
+```csharp
+Events.PlayerTakeDamage += args => {
+    if (args.DamageAmount > 50f) args.DamageAmount = 50f;  // cap incoming damage
+    // or args.Cancel = true to negate it entirely
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `DamageAmount` | `float` | Damage about to be applied. Modify to scale. |
+| `DamageSource` | `Vector3` | World position the damage came from |
+| `Player` | `Player` | The player taking damage |
+| `Cancel` | `bool` | Set true to skip the damage entirely |
+
+Good for god mode, damage absorption armor, difficulty scalers.
+
+#### `Events.BlockDestroyed`
+
+Fires every time a block transitions to Empty. Catches player digging, explosions, zombie digging, and remote AlterBlockMessage syncs. It's the low level "block went away" event.
+
+```csharp
+Events.BlockDestroyed += args => {
+    ModLog.Info("Block " + args.BlockType + " destroyed at " + args.BlockPosition);
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `BlockType` | `BlockTypeEnum` | The block that was destroyed |
+| `BlockPosition` | `IntVector3` | World position |
+| `DestroyedBy` | `Player` | Currently always null. Reserved. |
+
+For "the player just mined a block" specifically, use `PlayerMinedBlock` below. That gives you the actual item the player got, which is more useful for drop tables.
+
+#### `Events.PlayerMinedBlock`
+
+Fires when the local player successfully mines a block, after vanilla mining has produced its drop. The args include the actual item the player got, the tool they used, and the block.
+
+```csharp
+Events.PlayerMinedBlock += args => {
+    if (args.Drop == null) return;  // wrong tier pickaxe gave nothing
+    // duplicate the drop
+    InventoryItem extra = args.Drop.ItemClass.CreateItem(args.Drop.StackCount);
+    Vector3 pos = IntVector3.ToVector3(args.BlockPosition) + new Vector3(0.5f, 0.5f, 0.5f);
+    PickupManager.Instance.CreatePickup(extra, pos, false);
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `BlockType` | `BlockTypeEnum` | What was mined |
+| `BlockPosition` | `IntVector3` | Where |
+| `Drop` | `InventoryItem` | What vanilla just dropped. May be null. |
+| `Tool` | `InventoryItem` | The tool the player was holding |
+| `Player` | `Player` | The player |
+
+This is the right event for double drops, fortune style enchants, custom drop tables, anything reacting to "the player got an item from mining". The vanilla drop already exists when the event fires.
+
+#### `Events.GameTick`
+
+Fires every frame.
+
+```csharp
+Events.GameTick += args => {
+    // runs at ~30 Hz on Xbox 360
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `GameTime` | `GameTime` | XNA game time (elapsed since last frame, total elapsed) |
+
+Be careful what you do here, it fires a lot. If you need to run something every few seconds, track time yourself and only act when enough has passed.
+
+#### `Events.PlayerRespawn`
+
+Fires when the local player respawns after dying.
+
+```csharp
+Events.PlayerRespawn += args => {
+    args.Player.WorldPosition = mySpawnPoint;  // teleport to custom spawn
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `Player` | `Player` | The respawning player |
+
+#### `Events.ItemCrafted`
+
+Fires when the player crafts an item via the crafting UI. Covers both creative (infinite resources) and survival modes.
+
+```csharp
+Events.ItemCrafted += args => {
+    ModLog.Info("Crafted " + args.Result.StackCount + "x " + args.Result.ItemClass.Name);
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `Recipe` | `Receipe` | The recipe definition that was used |
+| `Result` | `InventoryItem` | The item that was added to inventory |
+
+#### `Events.EnemyKilled`
+
+Fires when an enemy is killed by the local player. Covers zombies, aliens, and dragons.
+
+```csharp
+Events.EnemyKilled += args => {
+    if (args.EnemyTypeName == "Dragon") ModLog.Info("Dragon down!");
+};
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `Enemy` | `BaseZombie` | The enemy entity. Null for dragons. |
+| `KillingItemID` | `InventoryItemIDs` | The weapon used |
+| `ShooterID` | `byte` | Network ID of the player who got the kill |
+| `DeathPosition` | `Vector3` | World position |
+| `EnemyTypeName` | `string` | "Zombie", "Alien", "Dragon", etc. |
+
+Good for kill counters, achievement systems, custom XP, mob loot tables.
+
+---
+
+### `Data`
+
+Persist data with the world save. Mods get a key-value store keyed automatically per mod, saved alongside the world and reloaded when the world loads.
+
+#### Per world data
+
+Saved with the world, lost if the world is deleted.
+
+```csharp
+Data.SetWorld("kills", "42");
+string kills = Data.GetWorld("kills", "0");
+
+Data.SetWorldInt("kills", 42);
+int n = Data.GetWorldInt("kills", 0);
+```
+
+#### Global data
+
+Saved globally, survives across worlds.
+
+```csharp
+Data.SetGlobal("first-launch", "2025-01-15");
+string firstLaunch = Data.GetGlobal("first-launch", null);
+```
+
+#### Notes
+
+- The store is keyed per mod automatically. Calls from inside your `OnLoad()` and event handlers know which mod they belong to, you don't have to namespace your keys.
+- Data is saved when the world saves, which happens periodically and on quit. Don't expect a SetWorld call to be flushed instantly.
+- The store is string to string. For int helpers there are SetWorldInt and GetWorldInt. For anything more complex (lists, structs), serialize to string yourself (JSON, comma separated, whatever fits).
+- If your mod is uninstalled, its saved data stays in the world file but becomes inert. Reinstalling the mod will pick it back up.
+
+#### Example: a kill counter
+
+```csharp
+[Mod(Id = "you.kill-counter", Name = "Kill Counter", Version = "1.0.0")]
+public static class KillCounterMod
+{
+    public static void OnLoad()
+    {
+        int kills = Data.GetWorldInt("total-kills", 0);
+        ModLog.Info("Kill count loaded: " + kills);
+
+        Events.EnemyKilled += args => {
+            int current = Data.GetWorldInt("total-kills", 0);
+            Data.SetWorldInt("total-kills", current + 1);
+        };
+    }
+}
+```
+
+---
+
 ## Walkthrough: a custom item (diamond sword)
 
 A full working version of this is in `mods-examples/diamond-sword/`. Copy it to `mods/diamond-sword/` and build if you just want to see it run.
@@ -465,6 +754,97 @@ Common follow-ups:
 - **Make it cheaper / more expensive.** Change the `Recipes.Add(...)` ingredients.
 
 For a fully custom texture (your own art rather than reusing a vanilla icon), see the texture section in `source_modding.md`. That part still requires direct asset modding.
+
+---
+
+## Walkthrough: a custom block (marble)
+
+A full version of this is in `mods-examples/marble-block/`. Copy it to `mods/marble-block/` and build to see it run.
+
+```
+mods/
+└── marble-block/
+    ├── mod.json
+    └── MarbleBlockMod.cs
+```
+
+**`mod.json`**:
+
+```json
+{
+    "id": "example.marble-block",
+    "name": "Marble Block",
+    "author": "Your Name",
+    "version": "1.0.0",
+    "description": "A new placeable block crafted from stone",
+    "modapi_version": "1"
+}
+```
+
+**`MarbleBlockMod.cs`**:
+
+```csharp
+using DNA.CastleMinerZ.Inventory;
+using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.Terrain;
+
+namespace ExampleMarbleBlock
+{
+    [Mod(Id = "example.marble-block", Name = "Marble Block", Version = "1.0.0")]
+    public static class MarbleBlockMod
+    {
+        public static void OnLoad()
+        {
+            // Register a new block type (allocates a slot 200-255)
+            Blocks.Register("example.marble-block", new BlockDef {
+                DisplayName       = "Marble",
+                Hardness          = 4,
+                LightTransmission = 0.2f,
+                SelfIllumination  = 0.1f,
+                TileIndices       = new int[6] { 0, 0, 0, 0, 0, 0 },
+                BlockPlayer       = true,
+                CanBeDug          = true,
+                CanBeTouched      = true,
+                CanBuildOn        = true,
+            });
+
+            // Register the inventory item that places it
+            Items.Register("example.marble-block", new ItemDef {
+                DisplayName   = "Marble Block",
+                Description1  = "A polished block of marble",
+                Description2  = "Slightly luminous. Crafted from stone.",
+                MaxStackSize  = 100,
+                BehaviorClass = ItemBehaviors.Block,
+            });
+
+            // Recipe: 4 rocks -> 4 marble blocks
+            Recipes.Add("example.marble-block", 4,
+                InventoryItemIDs.RockBlock, InventoryItemIDs.RockBlock,
+                InventoryItemIDs.RockBlock, InventoryItemIDs.RockBlock);
+        }
+    }
+}
+```
+
+Build and deploy:
+
+```powershell
+.\deploy.ps1 -Pack
+```
+
+Open the crafting menu in-game. The Marble Block recipe should appear. Craft it, place it, mine it, get it back. Hardness 4 means about 4 seconds to dig with any pickaxe.
+
+### Iterating on the block
+
+Common follow-ups:
+
+- **Change the look.** Swap `TileIndices` values to other tiles from the vanilla atlas (0=dirt, 2=grass top, 5=rock, etc). Each of the 6 array entries is a different face. Pass the same value six times for a uniform block.
+- **Make it glow.** Bump `SelfIllumination` toward 1.0 to emit light without needing a lantern next to it.
+- **Make it harder or softer.** Hardness 1 mines instantly, Hardness 4 takes a few seconds, Hardness 5 is unbreakable. Pick the feel you want.
+- **Drop something other than itself.** Set `ParentBlockType = BlockTypeEnum.Rock` to make mining marble give you a Rock item. Useful for fake-look blocks like a hidden stone variant.
+- **React when it's mined.** Subscribe to `Events.PlayerMinedBlock`, check `args.BlockType` against your slot, and run custom logic (spawn particles, give a bonus item, trigger a quest, etc).
+
+For wholly new textures (not reusing atlas tiles), see the texture section in `source_modding.md`. The framework can't extend the atlas yet.
 
 ---
 
@@ -598,12 +978,12 @@ Check the item actually exists in vanilla. Some items in `InventoryItemIDs` are 
 
 Things you currently can't do via the framework, and have to drop into direct source editing (`source_modding.md`) for:
 
-- **New textures.** You can name an existing `.xnb`, but adding new ones requires the asset pipeline.
-- **New blocks** with new atlas tiles.
+- **New textures.** You can pick from existing atlas tiles for blocks, or name an existing `.xnb` for item icons, but adding new ones requires the asset pipeline.
+- **Per pickaxe tier dig times for mod blocks.** Mod blocks dig in `Hardness` seconds regardless of which pickaxe is used. To make a wood pick slower than a diamond pick on your specific block, you'd need to extend the pickaxe switch tables in source.
 - **New enemies** or AI behavior changes.
 - **Audio replacement** (XACT bundles).
-- **Multiplayer protocol changes.**
-- **World generation rules.**
+- **Multiplayer protocol changes.** Mod blocks DO sync over multiplayer via the existing AlterBlockMessage path, but new message types aren't supported.
+- **World generation rules.** No "spawn marble in caves" yet.
 - **Achievements, game modes, network message types.**
 
 These may show up in the framework over time. For now, mod those via direct source editing.

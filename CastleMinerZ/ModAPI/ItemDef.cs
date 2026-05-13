@@ -27,6 +27,12 @@ namespace DNA.CastleMinerZ.ModAPI
         public Func<BinaryWriter, object, byte[]> SerializeCustomData { get; set; }
         public Func<BinaryReader, object> DeserializeCustomData { get; set; }
 
+        /// <summary>
+        /// For items using the Block behavior: ID of the registered BlockDef that
+        /// this item places. If null or unregistered, falls back to Wood.
+        /// </summary>
+        public string BlockId { get; set; }
+
         private InventoryItem.InventoryItemClass _cachedClass;
 
         public ItemDef()

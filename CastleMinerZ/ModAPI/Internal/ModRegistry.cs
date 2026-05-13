@@ -7,6 +7,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
     {
         public static List<string> LoadedModIds { get; private set; }
         public static List<string> FailedModIds { get; private set; }
+        internal static string CurrentLoadingModId;
 
         static ModRegistry()
         {
@@ -18,6 +19,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
         {
             ModLog.Info("=== Mod load begin ===");
             GeneratedModRegistry.Initialize();
+            CurrentLoadingModId = null;
             ModLog.Info("=== Mod load complete ===");
         }
     }

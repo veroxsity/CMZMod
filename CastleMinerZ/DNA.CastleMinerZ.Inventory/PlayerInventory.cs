@@ -5,6 +5,7 @@ using DNA.Audio;
 using DNA.CastleMinerZ.UI;
 using DNA.IO.Storage;
 using Microsoft.Xna.Framework;
+using DNA.CastleMinerZ.ModAPI;
 
 namespace DNA.CastleMinerZ.Inventory
 {
@@ -301,6 +302,11 @@ namespace DNA.CastleMinerZ.Inventory
 			{
 				InventoryItem item = receipe.Result.ItemClass.CreateItem(receipe.Result.StackCount);
 				AddInventoryItem(item);
+				Events.FireItemCrafted(new ItemCraftedEventArgs
+				{
+					Recipe = receipe,
+					Result = item,
+				});
 				return;
 			}
 			for (int i = 0; i < receipe.Ingredients.Count; i++)
@@ -342,6 +348,12 @@ namespace DNA.CastleMinerZ.Inventory
 			}
 			InventoryItem item2 = receipe.Result.ItemClass.CreateItem(receipe.Result.StackCount);
 			AddInventoryItem(item2);
+
+			Events.FireItemCrafted(new ItemCraftedEventArgs
+			{
+				Recipe = receipe,
+				Result = item2,
+			});
 		}
 
 		public void Remove(InventoryItem item)

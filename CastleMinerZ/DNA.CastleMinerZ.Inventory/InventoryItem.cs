@@ -709,7 +709,19 @@ namespace DNA.CastleMinerZ.Inventory
 			case BlockTypeEnum.Crate:
 				return TimeSpan.FromSeconds(2.0);
 			default:
-				return TimeSpan.MaxValue;
+				{
+					// Mod blocks (slots 200-255): derive dig time from Hardness
+					// instead of returning MaxValue (which would make them
+					// unbreakable like Bedrock). Hardness 1 -> 1s, 5+ -> unbreakable.
+					int slot = (int)blockType;
+					if (slot >= 200 && slot <= 255)
+					{
+						BlockType bt = BlockType.GetType(blockType);
+						if (bt != null && bt.Hardness < 5)
+							return TimeSpan.FromSeconds(Math.Max(1, bt.Hardness));
+					}
+					return TimeSpan.MaxValue;
+				}
 			}
 		}
 

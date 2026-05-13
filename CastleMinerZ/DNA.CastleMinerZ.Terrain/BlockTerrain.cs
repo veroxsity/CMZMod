@@ -6,6 +6,7 @@ using DNA.CastleMinerZ.Utils;
 using DNA.CastleMinerZ.Utils.Threading;
 using DNA.CastleMinerZ.Utils.Trace;
 using DNA.Drawing;
+using DNA.CastleMinerZ.ModAPI;
 using DNA.Profiling;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -3856,42 +3857,74 @@ namespace DNA.CastleMinerZ.Terrain
 
 		public bool SetBlock(IntVector3 worldIndex, BlockTypeEnum type)
 		{
+			// Snapshot existing block type before we queue the mod, so we can
+			// fire BlockDestroyed if this call is removing an existing block.
+			BlockTypeEnum oldType = BlockTypeEnum.Empty;
+			if (IsReady)
+			{
+				IntVector3 snapLocal = IntVector3.Subtract(worldIndex, _worldMin);
+				if (IsIndexValid(snapLocal))
+				{
+					oldType = Block.GetTypeIndex(_blocks[MakeIndex(snapLocal)]);
+				}
+			}
+
 			ChunkCacheCommand chunkCacheCommand = ChunkCacheCommand.Alloc();
 			chunkCacheCommand._command = ChunkCacheCommandEnum.MOD;
 			chunkCacheCommand._worldPosition = worldIndex;
 			chunkCacheCommand._blockType = type;
 			chunkCacheCommand._priority = 1;
 			ChunkCache.Instance.AddCommand(chunkCacheCommand);
-			if (!IsReady)
+
+			bool result = false;
+			if (IsReady)
 			{
-				return false;
-			}
-			IntVector3 a = IntVector3.Subtract(worldIndex, _worldMin);
-			if (IsIndexValid(a))
-			{
-				int num = MakeChunkIndexFromIndexVector(a);
-				lock (_chunks[num]._mods)
+				IntVector3 a = IntVector3.Subtract(worldIndex, _worldMin);
+				if (IsIndexValid(a))
 				{
-					for (PendingMod pendingMod = _chunks[num]._mods.Front; pendingMod != null; pendingMod = (PendingMod)pendingMod.NextNode)
+					int num = MakeChunkIndexFromIndexVector(a);
+					bool alreadyPending = false;
+					lock (_chunks[num]._mods)
 					{
-						if (pendingMod._worldPosition.Equals(worldIndex))
+						for (PendingMod pendingMod = _chunks[num]._mods.Front; pendingMod != null; pendingMod = (PendingMod)pendingMod.NextNode)
 						{
-							pendingMod._blockType = type;
-							return false;
+							if (pendingMod._worldPosition.Equals(worldIndex))
+							{
+								pendingMod._blockType = type;
+								alreadyPending = true;
+								break;
+							}
+						}
+					}
+					if (!alreadyPending)
+					{
+						if (_chunks[num]._action > NextChunkAction.COMPUTING_BLOCKS && Block.GetTypeIndex(_blocks[MakeIndex(a)]) == type)
+						{
+							result = false;
+						}
+						else
+						{
+							PendingMod pendingMod2 = PendingMod.Alloc();
+							pendingMod2._worldPosition = worldIndex;
+							pendingMod2._blockType = type;
+							_chunks[num]._mods.Queue(pendingMod2);
+							result = true;
 						}
 					}
 				}
-				if (_chunks[num]._action > NextChunkAction.COMPUTING_BLOCKS && Block.GetTypeIndex(_blocks[MakeIndex(a)]) == type)
-				{
-					return false;
-				}
-				PendingMod pendingMod2 = PendingMod.Alloc();
-				pendingMod2._worldPosition = worldIndex;
-				pendingMod2._blockType = type;
-				_chunks[num]._mods.Queue(pendingMod2);
-				return true;
 			}
-			return false;
+
+			if (type == BlockTypeEnum.Empty && oldType != BlockTypeEnum.Empty)
+			{
+				Events.FireBlockDestroyed(new BlockDestroyedEventArgs
+				{
+					BlockPosition = worldIndex,
+					BlockType    = oldType,
+					DestroyedBy  = null,
+				});
+			}
+
+			return result;
 		}
 
 		public Vector3 GetActualWaterColor()

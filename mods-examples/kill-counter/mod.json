@@ -1,0 +1,8 @@
+{
+    "id": "example.kill-counter",
+    "name": "Kill Counter",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Tracks total enemies killed and persists the count across sessions",
+    "modapi_version": "1"
+}
