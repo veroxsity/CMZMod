@@ -1,0 +1,8 @@
+{
+    "id": "example.fast-zombies",
+    "name": "Fast Zombies",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Adds a faster custom zombie type to surface spawn pools",
+    "modapi_version": "1"
+}

@@ -1,0 +1,8 @@
+{
+    "id": "example.no-aliens",
+    "name": "No Aliens",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Disables alien enemy spawns",
+    "modapi_version": "1"
+}

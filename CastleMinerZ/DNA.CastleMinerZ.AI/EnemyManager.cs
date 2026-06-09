@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using DNA.CastleMinerZ.Inventory;
+using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.CastleMinerZ.Net;
 using DNA.CastleMinerZ.Terrain;
 using DNA.CastleMinerZ.UI;
@@ -456,6 +458,13 @@ namespace DNA.CastleMinerZ.AI
 			{
 				return;
 			}
+			EnemyTypeEnum spawnType = msg.EnemyTypeID;
+			EnemyDef spawnOverrides = null;
+			if (!EntityRegistry.FireSpawnHook(ref spawnType, msg.SpawnPosition, ref spawnOverrides))
+			{
+				return;
+			}
+			msg.EnemyTypeID = spawnType;
 			bool flag = false;
 			if (player.IsLocal)
 			{
@@ -476,6 +485,7 @@ namespace DNA.CastleMinerZ.AI
 			if (flag)
 			{
 				BaseZombie z = new BaseZombie(this, msg.EnemyTypeID, player, msg.SpawnPosition, msg.EnemyID, msg.RandomSeed, msg.InitPkg);
+				EntityRegistry.ApplySpawnOverrides(z, spawnOverrides);
 				AddZombie(z);
 			}
 		}
@@ -1198,7 +1208,8 @@ namespace DNA.CastleMinerZ.AI
 			float midnight = CalculateMidnight(distance, plrpos.Y);
 			Vector3 worldVelocity = CastleMinerZGame.Instance.LocalPlayer.PlayerPhysics.WorldVelocity;
 			worldVelocity *= 5f;
-			EnemyTypeEnum zombie = EnemyType.GetZombie(distance);
+			EnemyTypeEnum zombie = EntityRegistry.ResolveSpawnType(
+				EnemyType.GetZombie(distance), EnemyType.FoundInEnum.ABOVEGROUND);
 			int spawnRadius = EnemyType.Types[(int)zombie].SpawnRadius;
 			vector.X += worldVelocity.X + (float)_rnd.Next(-spawnRadius, spawnRadius + 1);
 			vector.Z += worldVelocity.Z + (float)_rnd.Next(-spawnRadius, spawnRadius + 1);
@@ -1244,7 +1255,8 @@ namespace DNA.CastleMinerZ.AI
 			}
 			Vector3 worldVelocity = CastleMinerZGame.Instance.LocalPlayer.PlayerPhysics.WorldVelocity;
 			worldVelocity *= 5f;
-			EnemyTypeEnum abovegroundEnemy = EnemyType.GetAbovegroundEnemy(num2, num);
+			EnemyTypeEnum abovegroundEnemy = EntityRegistry.ResolveSpawnType(
+				EnemyType.GetAbovegroundEnemy(num2, num), EnemyType.FoundInEnum.ABOVEGROUND);
 			int spawnRadius = EnemyType.Types[(int)abovegroundEnemy].SpawnRadius;
 			vector.X += worldVelocity.X + (float)_rnd.Next(-spawnRadius, spawnRadius + 1);
 			vector.Z += worldVelocity.Z + (float)_rnd.Next(-spawnRadius, spawnRadius + 1);
@@ -1285,7 +1297,8 @@ namespace DNA.CastleMinerZ.AI
 			{
 				return;
 			}
-			EnemyTypeEnum belowgroundEnemy = EnemyType.GetBelowgroundEnemy(num, num4);
+			EnemyTypeEnum belowgroundEnemy = EntityRegistry.ResolveSpawnType(
+				EnemyType.GetBelowgroundEnemy(num, num4), EnemyType.FoundInEnum.CAVES);
 			int spawnRadius = EnemyType.Types[(int)belowgroundEnemy].SpawnRadius;
 			int num6 = _rnd.Next(-spawnRadius, spawnRadius);
 			num6 = ((num6 > 0) ? (num6 + 5) : (num6 - 5));
@@ -1334,6 +1347,8 @@ namespace DNA.CastleMinerZ.AI
 
 		private void SpawnAlien(Vector3 plrpos, bool inAsteroid, float gametime)
 		{
+			if (!EntityRegistry.IsSpawnEnabled(EnemyTypeEnum.ALIEN))
+				return;
 			if (!(_timeSinceLastAlien > _nextAlienTime))
 			{
 				return;

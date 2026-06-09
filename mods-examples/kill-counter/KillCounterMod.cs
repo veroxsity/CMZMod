@@ -28,8 +28,8 @@ namespace ExampleKillCounter
 
             string enemyName = args.EnemyTypeName ?? "Unknown";
             string weaponName = args.GetKillingWeaponName();
-            ModLog.Info(string.Format("Kill #{0}: {1} killed with {2}",
-                _totalKills, enemyName, weaponName));
+            ModLog.Info(string.Format("Kill #{0}: {1} killed with {2} ({3:F0} max HP)",
+                _totalKills, enemyName, weaponName, args.GetMaxHealth()));
         }
 
         private static void DrawKillCounter(HUDDrawArgs args)

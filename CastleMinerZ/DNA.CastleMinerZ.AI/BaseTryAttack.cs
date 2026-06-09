@@ -1,4 +1,6 @@
 using System;
+using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.CastleMinerZ.UI;
 using Microsoft.Xna.Framework;
 
@@ -119,7 +121,11 @@ namespace DNA.CastleMinerZ.AI
 					}
 					if (flag)
 					{
-						InGameHUD.Instance.ApplyDamage(HitDamages[entity.AnimationIndex], entity.WorldPosition);
+						float damage = HitDamages[entity.AnimationIndex];
+						float overrideDamage = EntityRegistry.GetMeleeDamageOverride(entity.EType.EType);
+						if (overrideDamage >= 0f)
+							damage = overrideDamage;
+						InGameHUD.Instance.ApplyDamage(damage, entity.WorldPosition);
 					}
 				}
 				entity.HitCount++;

@@ -142,5 +142,13 @@ namespace DNA.CastleMinerZ.ModAPI
                 return KillingModItemId;
             return KillingItemID.ToString();
         }
+
+        /// <summary>Max HP the enemy spawned with (useful for verifying stat override mods).</summary>
+        public float GetMaxHealth()
+        {
+            if (Enemy == null || Enemy.EType == null)
+                return 0f;
+            return Enemy.EType.StartingHealth;
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -149,7 +150,38 @@ namespace DNA.CastleMinerZ.AI
 
 		public static EnemyType GetEnemyType(EnemyTypeEnum et)
 		{
-			return Types[(int)et];
+			if (Types == null)
+				return null;
+			int idx = (int)et;
+			if (idx < 0 || idx >= Types.Length)
+				return null;
+			return Types[idx];
+		}
+
+		public static void RegisterModEnemy(EnemyType type)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+			int slot = (int)type.EType;
+			if (slot < EntityRegistry.ModEnemySlotStart || slot > EntityRegistry.ModEnemySlotEnd)
+				throw new ArgumentOutOfRangeException("type.EType", "Mod enemy slot must be 200-255");
+			EnsureTypesCapacity(slot + 1);
+			if (Types[slot] != null)
+				throw new InvalidOperationException("Enemy slot " + slot + " is already occupied");
+			Types[slot] = type;
+		}
+
+		private static void EnsureTypesCapacity(int minLength)
+		{
+			if (Types == null)
+				Types = new EnemyType[52];
+			if (Types.Length >= minLength)
+				return;
+			int newLength = Math.Max(minLength, EntityRegistry.ModEnemySlotEnd + 1);
+			EnemyType[] expanded = new EnemyType[newLength];
+			for (int i = 0; i < Types.Length; i++)
+				expanded[i] = Types[i];
+			Types = expanded;
 		}
 
 		public static void Init()

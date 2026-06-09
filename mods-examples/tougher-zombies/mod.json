@@ -1,0 +1,8 @@
+{
+    "id": "example.tougher-zombies",
+    "name": "Tougher Zombies",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Surface zombies spawn with 50 HP instead of vanilla scaling",
+    "modapi_version": "1"
+}
