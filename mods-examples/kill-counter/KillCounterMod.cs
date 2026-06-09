@@ -23,7 +23,7 @@ namespace ExampleKillCounter
             Data.SetWorldInt(ModId, "totalKills", _totalKills);
 
             string enemyName = args.EnemyTypeName ?? "Unknown";
-            string weaponName = args.KillingItemID.ToString();
+            string weaponName = args.GetKillingWeaponName();
             ModLog.Info(string.Format("Kill #{0}: {1} killed with {2}",
                 _totalKills, enemyName, weaponName));
         }

@@ -288,6 +288,7 @@ namespace DNA.CastleMinerZ.AI
 				{
 					Enemy = this,
 					KillingItemID = itemClass.ID,
+					KillingModItemId = itemClass.ModItemId,
 					ShooterID = shooterID,
 					DeathPosition = damagePosition,
 					EnemyTypeName = EType.GetType().Name,

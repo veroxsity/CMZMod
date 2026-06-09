@@ -51,5 +51,12 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 return def.Slot;
             return BlockTypeEnum.Empty;
         }
+
+        public static void ApplyDef(string id)
+        {
+            BlockDef def = Resolve(id);
+            if (def != null)
+                BlockType.ApplyFromDef(def.Slot, def);
+        }
     }
 }

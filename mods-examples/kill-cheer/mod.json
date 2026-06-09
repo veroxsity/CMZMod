@@ -1,0 +1,8 @@
+{
+    "id": "example.kill-cheer",
+    "name": "Kill Cheer",
+    "author": "CMZMod",
+    "version": "1.0.0",
+    "description": "Plays a coin sound when the local player kills an enemy",
+    "modapi_version": "1"
+}

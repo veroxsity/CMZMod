@@ -17,6 +17,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
 
         public static void Initialize()
         {
+            AudioRegistry.Initialize();
             ModLog.Info("=== Mod load begin ===");
             GeneratedModRegistry.Initialize();
             CurrentLoadingModId = null;

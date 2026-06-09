@@ -354,6 +354,7 @@ namespace DNA.CastleMinerZ.AI
 					{
 						Enemy = null,
 						KillingItemID = itemClass.ID,
+						KillingModItemId = itemClass.ModItemId,
 						ShooterID = shooterID,
 						DeathPosition = base.WorldPosition,
 						EnemyTypeName = "Dragon",

@@ -225,6 +225,48 @@ namespace DNA.CastleMinerZ.Terrain
 			_blockTypes[slot].ParentBlockType = def.ParentBlockType;
 		}
 
+		public static void ApplyFromDef(BlockTypeEnum type, ModAPI.BlockDef def)
+		{
+			if (def == null)
+				return;
+			int idx = (int)type;
+			if (idx < 0 || idx >= _blockTypes.Length)
+				return;
+			BlockType bt = _blockTypes[idx];
+			if (bt == null)
+				return;
+			bt.ApplyFromDef(def);
+		}
+
+		public void ApplyFromDef(ModAPI.BlockDef def)
+		{
+			if (def.DisplayName != null)
+				Name = def.DisplayName;
+			Hardness = def.Hardness;
+			LightTransmission = (int)Math.Floor(def.LightTransmission * 16f + 0.5f);
+			SelfIllumination = (int)Math.Floor(def.SelfIllumination * 15f + 0.5f);
+			DamageTransmision = def.DamageTransmission;
+			IsItemEntity = def.IsItemEntity;
+			LightAsTranslucent = def.LightAsTranslucent;
+			InteriorFaces = def.InteriorFaces;
+			HasAlpha = def.HasAlpha;
+			NeedsFancyLighting = def.NeedsFancyLighting;
+			BlockPlayer = def.BlockPlayer;
+			CanBeTouched = def.CanBeTouched;
+			CanBuildOn = def.CanBuildOn;
+			CanBeDug = def.CanBeDug;
+			DrawFullBright = def.DrawFullBright;
+			SpawnEntity = def.SpawnEntity;
+			BouncesLasers = def.BouncesLasers;
+			BounceRestitution = def.BounceRestitution;
+			AllowSlopes = def.AllowSlopes;
+			Facing = def.Facing;
+			if (def.ParentBlockType != BlockTypeEnum.Empty)
+				ParentBlockType = def.ParentBlockType;
+			if (def.TileIndices != null)
+				TileIndices = (int[])def.TileIndices.Clone();
+		}
+
 		public int TransmitLight(int inlight)
 		{
 			return Math.Max(0, (inlight - 1) * LightTransmission >> 4);

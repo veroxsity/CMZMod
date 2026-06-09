@@ -76,13 +76,31 @@ namespace DNA.Audio
 
 		public Cue PlayInstance(string name)
 		{
+			if (BeforePlayInstance != null)
+			{
+				SoundPlayHookArgs args = new SoundPlayHookArgs { CueName = name };
+				BeforePlayInstance(args);
+				if (args.Suppressed)
+					return null;
+				name = args.CueName;
+			}
 			Cue cue = GetCue(name);
 			cue.Play();
 			return cue;
 		}
 
+		public static System.Action<SoundPlayHookArgs> BeforePlayInstance;
+
 		public SoundCue3D PlayInstance(string name, AudioEmitter emitter)
 		{
+			if (BeforePlayInstance != null)
+			{
+				SoundPlayHookArgs args = new SoundPlayHookArgs { CueName = name };
+				BeforePlayInstance(args);
+				if (args.Suppressed)
+					return null;
+				name = args.CueName;
+			}
 			Cue cue = GetCue(name);
 			cue.Apply3D(ActiveListener, emitter);
 			cue.Play();

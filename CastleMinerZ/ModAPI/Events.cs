@@ -130,8 +130,17 @@ namespace DNA.CastleMinerZ.ModAPI
     {
         public BaseZombie Enemy;
         public InventoryItemIDs KillingItemID;
+        /// <summary>Mod item string ID when the killing weapon is a mod item (uses BareHands enum slot).</summary>
+        public string KillingModItemId;
         public byte ShooterID;
         public Vector3 DeathPosition;
         public string EnemyTypeName;
+
+        public string GetKillingWeaponName()
+        {
+            if (KillingModItemId != null)
+                return KillingModItemId;
+            return KillingItemID.ToString();
+        }
     }
 }

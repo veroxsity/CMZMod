@@ -42,13 +42,16 @@ namespace DNA.CastleMinerZ.ModAPI
                 ParentBlockType = type.ParentBlockType,
             };
             change(def);
+            BlockType.ApplyFromDef(block, def);
         }
 
         public static void Modify(string modBlockId, Action<BlockDef> change)
         {
             BlockDef def = Internal.BlockRegistry.Resolve(modBlockId);
-            if (def != null)
-                change(def);
+            if (def == null)
+                return;
+            change(def);
+            Internal.BlockRegistry.ApplyDef(modBlockId);
         }
 
         public static BlockDef Get(string id)

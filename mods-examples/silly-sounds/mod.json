@@ -1,0 +1,8 @@
+{
+    "id": "example.silly-sounds",
+    "name": "Silly Sounds",
+    "author": "CMZMod",
+    "version": "1.0.0",
+    "description": "Replaces damage hit sound with the gold pickup sound",
+    "modapi_version": "1"
+}
