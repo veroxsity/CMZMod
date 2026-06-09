@@ -1,0 +1,8 @@
+{
+    "id": "example.ruins",
+    "name": "Surface Ruins",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Rare stone markers with torches on newly generated surface chunks",
+    "modapi_version": "1"
+}

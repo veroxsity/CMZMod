@@ -1,0 +1,8 @@
+{
+    "id": "example.mythril-ore",
+    "name": "Mythril Ore",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "Adds a glowing mythril ore block that generates underground in new worlds",
+    "modapi_version": "1"
+}

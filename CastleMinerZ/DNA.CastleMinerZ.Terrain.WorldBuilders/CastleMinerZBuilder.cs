@@ -1,4 +1,6 @@
 using System;
+using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using Microsoft.Xna.Framework;
 
 namespace DNA.CastleMinerZ.Terrain.WorldBuilders
@@ -160,6 +162,13 @@ namespace DNA.CastleMinerZ.Terrain.WorldBuilders
 					trees.BuildColumn(terrain, worldX, worldZ, minLoc.Y, 1f);
 				}
 			}
+			WorldgenRegistry.DepositModOres(terrain, minLoc, WorldInfo.Seed);
+			Worldgen.FireChunkGenerated(new ChunkGeneratedArgs
+			{
+				Terrain = terrain,
+				ChunkMin = minLoc,
+				ChunkSize = new IntVector3(16, 256, 16),
+			});
 		}
 	}
 }

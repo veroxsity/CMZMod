@@ -549,11 +549,7 @@ namespace DNA.CastleMinerZ.Inventory
 
 		public static InventoryItem Create(BinaryReader reader)
 		{
-			InventoryItem inventoryItem = null;
-			InventoryItemIDs id = (InventoryItemIDs)reader.ReadInt16();
-			inventoryItem = CreateItem(id, 0);
-			inventoryItem.Read(reader);
-			return inventoryItem;
+			return CreateV2(reader);
 		}
 
 		public static InventoryItem CreateV2(BinaryReader reader)

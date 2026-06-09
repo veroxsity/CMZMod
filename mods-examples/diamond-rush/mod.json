@@ -1,0 +1,8 @@
+{
+    "id": "example.diamond-rush",
+    "name": "Diamond Rush",
+    "author": "CMZMod Example",
+    "version": "1.0.0",
+    "description": "10x diamond ore spawn rate in newly generated terrain",
+    "modapi_version": "1"
+}

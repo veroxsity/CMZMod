@@ -22,6 +22,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             AudioRegistry.Initialize();
             ModLog.Info("=== Mod load begin ===");
             GeneratedModRegistry.Initialize();
+            ItemRegistry.EnsureAllClassesCreated();
             if (CastleMinerZGame.Instance != null && CastleMinerZGame.Instance.FrontEnd != null)
                 CastleMinerZGame.Instance.FrontEnd.ApplyModMainMenuItems();
             CurrentLoadingModId = null;

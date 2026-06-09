@@ -1,4 +1,6 @@
 using System;
+using DNA.CastleMinerZ.ModAPI.Internal;
+using DNA.CastleMinerZ.Terrain;
 using DNA.Drawing.Noise;
 
 namespace DNA.CastleMinerZ.Terrain.WorldBuilders
@@ -16,6 +18,11 @@ namespace DNA.CastleMinerZ.Terrain.WorldBuilders
 		public override void BuildColumn(BlockTerrain terrain, int worldX, int worldZ, int minY, float blender)
 		{
 			int num = (int)(blender * 10f);
+			int coalBonus = WorldgenRegistry.GetOreThresholdBonus(BlockTypeEnum.CoalOre);
+			int copperBonus = WorldgenRegistry.GetOreThresholdBonus(BlockTypeEnum.CopperOre);
+			int ironBonus = WorldgenRegistry.GetOreThresholdBonus(BlockTypeEnum.IronOre);
+			int goldBonus = WorldgenRegistry.GetOreThresholdBonus(BlockTypeEnum.GoldOre);
+			int diamondBonus = WorldgenRegistry.GetOreThresholdBonus(BlockTypeEnum.DiamondOre);
 			for (int i = 0; i < 128; i++)
 			{
 				int y = i + minY;
@@ -28,11 +35,11 @@ namespace DNA.CastleMinerZ.Terrain.WorldBuilders
 				int num3 = _noiseFunction.ComputeNoise(intVector / 4);
 				int num4 = _noiseFunction.ComputeNoise(intVector);
 				num3 += (num4 - 128) / 8;
-				if (num3 > 255 - num)
+				if (num3 > 255 - num - coalBonus)
 				{
 					terrain._blocks[num2] = Biome.coalBlock;
 				}
-				else if (num3 < num - 5)
+				else if (num3 < num - 5 + copperBonus)
 				{
 					terrain._blocks[num2] = Biome.copperBlock;
 				}
@@ -40,11 +47,11 @@ namespace DNA.CastleMinerZ.Terrain.WorldBuilders
 				num3 = _noiseFunction.ComputeNoise(intVector2 / 3);
 				num4 = _noiseFunction.ComputeNoise(intVector2);
 				num3 += (num4 - 128) / 8;
-				if (num3 > 264 - num)
+				if (num3 > 264 - num - ironBonus)
 				{
 					terrain._blocks[num2] = Biome.ironBlock;
 				}
-				else if (num3 < -9 + num && i < 50)
+				else if (num3 < -9 + num + goldBonus && i < 50)
 				{
 					terrain._blocks[num2] = Biome.goldBlock;
 				}
@@ -58,7 +65,7 @@ namespace DNA.CastleMinerZ.Terrain.WorldBuilders
 					{
 						terrain._blocks[num2] = Biome.surfaceLavablock;
 					}
-					else if (num3 < -11 + num && i < 40)
+					else if (num3 < -11 + num + diamondBonus && i < 40)
 					{
 						terrain._blocks[num2] = Biome.diamondsBlock;
 					}
