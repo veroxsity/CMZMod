@@ -7,6 +7,7 @@ using DNA.CastleMinerZ.Inventory;
 using DNA.CastleMinerZ.Net;
 using DNA.CastleMinerZ.Terrain;
 using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.Drawing;
 using DNA.Drawing.Particles;
 using DNA.Drawing.UI;
@@ -711,6 +712,11 @@ namespace DNA.CastleMinerZ.UI
 				spriteBatch.End();
 			}
 			base.OnDraw(device, spriteBatch, gameTime);
+			if (!_hideUI)
+			{
+				UIRegistry.DrawHUDOverlays(device, spriteBatch, gameTime, this);
+				UIRegistry.DrawToasts(device, spriteBatch, gameTime);
+			}
 		}
 
 		public bool DrawAbleToBuild()

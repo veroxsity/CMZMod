@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using DNA.CastleMinerZ.UI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.Drawing;
 using DNA.Drawing.UI;
 using DNA.IO.Storage;
@@ -622,6 +623,10 @@ namespace DNA.CastleMinerZ
 			{
 				return;
 			}
+			if (UIRegistry.TryHandleMainMenuSelection(e.MenuItem))
+			{
+				return;
+			}
 			switch ((MainMenuItems)e.MenuItem.Tag)
 			{
 			case MainMenuItems.HostOnline:
@@ -910,6 +915,11 @@ namespace DNA.CastleMinerZ
 			int lineSpacing = _largeFont.LineSpacing;
 			SpriteBatch.DrawOutlinedText(_largeFont, text, new Vector2((float)viewport.TitleSafeArea.Center.X - vector.X / 2f, (float)viewport.TitleSafeArea.Center.Y - vector.Y / 2f), Color.White, Color.Black, 2);
 			SpriteBatch.End();
+		}
+
+		public void ApplyModMainMenuItems()
+		{
+			UIRegistry.ApplyMainMenuItems(_mainMenu);
 		}
 
 		public void PopToStartScreen()

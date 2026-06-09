@@ -77,7 +77,7 @@ static void usage(const char *p) {
         "Usage: " << p << " <input_dir> <output_file> [options]\n"
         "\n"
         "Options:\n"
-        "  --title-id HEX           Title ID (default: 584E07D2 - CMZ)\n"
+        "  --title-id HEX           Title ID (default: 584E07D1 - CMZ)\n"
         "  --content-type N         Content type (default: 2 = MarketPlaceContent)\n"
         "  --display-name STR       Dashboard tile text\n"
         "  --title-name STR         Category name (default: \"Indie Games\")\n"
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     std::string in_dir   = argv[1];
     std::string out_file = argv[2];
 
-    uint32_t title_id     = 0x584E07D2;
+    uint32_t title_id     = 0x584E07D1;
     uint32_t content_type = 2;
     std::wstring display_name = L"CastleMiner Z (Modded)";
     std::wstring title_name   = L"Indie Games";

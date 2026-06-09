@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using DNA.CastleMinerZ;
+using DNA.CastleMinerZ.ModAPI.Internal;
 
 namespace DNA.CastleMinerZ.ModAPI.Internal
 {
@@ -20,6 +22,8 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             AudioRegistry.Initialize();
             ModLog.Info("=== Mod load begin ===");
             GeneratedModRegistry.Initialize();
+            if (CastleMinerZGame.Instance != null && CastleMinerZGame.Instance.FrontEnd != null)
+                CastleMinerZGame.Instance.FrontEnd.ApplyModMainMenuItems();
             CurrentLoadingModId = null;
             ModLog.Info("=== Mod load complete ===");
         }

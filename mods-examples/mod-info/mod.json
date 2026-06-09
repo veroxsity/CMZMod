@@ -1,0 +1,8 @@
+{
+    "id": "example.mod-info",
+    "name": "Mod Info",
+    "author": "CMZMod",
+    "version": "1.0.0",
+    "description": "Title menu item listing all loaded mods",
+    "modapi_version": "1"
+}

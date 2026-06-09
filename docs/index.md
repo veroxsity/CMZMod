@@ -50,7 +50,7 @@ Edit C# source or drop a mod folder into `mods/`, run one PowerShell command, FT
 | **Game** | CastleMiner Z (XBLIG), version 1.6.3 |
 | **Console requirement** | RGH or JTAG Xbox 360 with FreeStyle Dash or Aurora |
 | **Toolchain** | Visual Studio 2010, XNA Game Studio 4.0, Xbox 360 SDK |
-| **Title ID** | `584E07D1` (folder), `584E07D2` (metadata) |
+| **Title ID** | `584E07D1` (folder), `584E07D1` (metadata) |
 | **Install path** | `Hdd1:\Content\0000000000000000\584E07D1\` |
 | **Status** | Pipeline runs end-to-end on real RGH hardware |
 

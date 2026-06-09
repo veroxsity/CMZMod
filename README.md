@@ -209,7 +209,7 @@ See: **[docs/source_modding.md](docs/source_modding.md)**.
 | | |
 |---|---|
 | Title ID (folder name) | `584E07D1` |
-| Title ID (metadata) | `584E07D2` |
+| Title ID (metadata) | `584E07D1` |
 | Console install path | `Hdd1:\Content\0000000000000000\584E07D1\` |
 | XNA platform | Xbox 360, XNA 4.0, HiDef profile |
 | Source version | 1.6.3 (matches retail) |

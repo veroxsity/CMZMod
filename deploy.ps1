@@ -370,7 +370,7 @@ if ($Pack) {
 
     $stfsOut = Join-Path $repoRoot 'CMZModded.stfs'
     & $stfsPack $deployDir $stfsOut `
-        --title-id 584E07D2 `
+        --title-id 584E07D1 `
         --no-wrap `
         --display-name "CMZ Modded"
 

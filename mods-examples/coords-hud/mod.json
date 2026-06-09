@@ -1,0 +1,8 @@
+{
+    "id": "example.coords-hud",
+    "name": "Coords HUD",
+    "author": "CMZMod",
+    "version": "1.0.0",
+    "description": "Shows player coordinates in the top-right corner",
+    "modapi_version": "1"
+}

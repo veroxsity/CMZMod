@@ -31,7 +31,7 @@ cd stfs-cli/
 ./build.sh
 
 # Use
-./stfs_pack ./deploy ./CMZModded.stfs --title-id 584E07D2 --wrap-folder 584E07D1
+./stfs_pack ./deploy ./CMZModded.stfs --title-id 584E07D1 --wrap-folder 584E07D1
 ```
 
 ## Quick start (Windows)
@@ -43,7 +43,7 @@ cd stfs-cli/
 
 ```cmd
 build_windows.bat
-stfs_pack.exe deploy CMZModded.stfs --title-id 584E07D2 --wrap-folder 584E07D1
+stfs_pack.exe deploy CMZModded.stfs --title-id 584E07D1 --wrap-folder 584E07D1
 ```
 
 ## Usage
@@ -52,8 +52,8 @@ stfs_pack.exe deploy CMZModded.stfs --title-id 584E07D2 --wrap-folder 584E07D1
 stfs_pack <input_dir> <output_file> [options]
 
 Options:
-  --title-id HEX         Title ID (default: 584E07D2 — CMZ).
-                         CMZ retail uses 584E07D2 in metadata, even though the
+  --title-id HEX         Title ID (default: 584E07D1 — CMZ).
+                         CMZ retail uses 584E07D1 in metadata, even though the
                          on-console folder name is 584E07D1.
   --content-type N       Content type (default: 2 = MarketPlaceContent).
   --display-name STR     Dashboard tile text. Make this distinctive so you can
@@ -64,7 +64,7 @@ Options:
 
 Example for CMZ Modded:
   stfs_pack ./extracted ./CMZModded.stfs \
-      --title-id 584E07D2 \
+      --title-id 584E07D1 \
       --wrap-folder 584E07D1 \
       --display-name "CastleMiner Z (Modded)"
 ```
