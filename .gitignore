@@ -105,6 +105,15 @@ console_ip.txt
 .UntrackedLocal/
 build_temp/
 mods/
+mod_asset_staging/
+tools/xnbcli/
+tools/xnbcli-bin/
+tools/test-icon.png
+tools/test-icon.xnb
+# Local xnbcli unpack/pack scratch (envmap roundtrips, pack tests, etc.)
+tools/asset-work/
+tools/compare-*/
+tools/roundtrip-test/
 
 # -----------------------------------------------------------------------------
 # OS / editor noise

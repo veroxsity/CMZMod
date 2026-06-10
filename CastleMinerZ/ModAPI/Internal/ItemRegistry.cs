@@ -20,6 +20,8 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 throw new System.ArgumentException("Mod item ID already registered: " + id);
 
             def.Id = id;
+            if (!string.IsNullOrEmpty(def.IconTextureName))
+                def.IconTextureName = AssetRegistry.ResolveItemIcon(def.IconTextureName);
             _items[id] = def;
         }
 

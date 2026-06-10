@@ -161,6 +161,15 @@ namespace DNA.CastleMinerZ.Inventory
 			{
 				if (ModItemId != null)
 				{
+					if (!string.IsNullOrEmpty(IconTextureName))
+					{
+						Texture2D icon = Assets.LoadTexture(IconTextureName);
+						if (icon != null)
+						{
+							batch.Draw(icon, destRect, color);
+							return;
+						}
+					}
 					if (_2DModImages == null)
 						FinishInitialization(batch.GraphicsDevice);
 					int idx = ModIconIndex;
@@ -531,6 +540,12 @@ namespace DNA.CastleMinerZ.Inventory
 
 				for (int i = 0; i < modClasses.Count; i++)
 				{
+					if (!string.IsNullOrEmpty(modClasses[i].IconTextureName)
+						&& AssetRegistry.Exists(modClasses[i].IconTextureName))
+					{
+						modClasses[i].ModIconIndex = i;
+						continue;
+					}
 					modClasses[i].ModIconIndex = i;
 					Entity entity = modClasses[i].CreateEntity(ItemUse.UI, false);
 					Vector3 vector = new Vector3(-256 + (i & 7) * 64 + 32, -modAtlasHeight / 2 + i / 8 * 64 + 32, -200f);

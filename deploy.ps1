@@ -113,6 +113,34 @@ if ($hasMods) {
     Write-Ok "No mods found in mods/ -- building vanilla"
 }
 
+# -- Step 1b: Mod asset pipeline (PNG/XNB -> Content/ModAssets/) --------------
+$modAssetStaging = Join-Path $repoRoot 'mod_asset_staging'
+$assetResult = $null
+if ($hasMods) {
+    . (Join-Path $repoRoot 'tools\pack_mod_assets.ps1')
+    Write-Step "Processing mod assets"
+    $assetResult = Invoke-ModAssetPipeline -RepoRoot $repoRoot -DiscoveredMods $discoveredMods -StagingRoot $modAssetStaging
+    $assetTotal = $assetResult.PackedCount + $assetResult.CopiedCount + $assetResult.PngCount
+    if ($assetTotal -gt 0) {
+        Write-Ok ("  {0} asset(s) staged ({1} png, {2} xnb packed, {3} xnb copied)" -f $assetTotal, $assetResult.PngCount, $assetResult.PackedCount, $assetResult.CopiedCount)
+    } else {
+        Write-Ok "  No mod assets found"
+    }
+    if ($assetResult.SkippedPng.Count -gt 0) {
+        if ($assetResult.ToolFound) {
+            Write-Warn ("  {0} PNG(s) failed to pack:" -f $assetResult.SkippedPng.Count)
+        } else {
+            Write-Warn ("  {0} PNG(s) skipped - install xnbcli or add a pre-built .xnb sidecar:" -f $assetResult.SkippedPng.Count)
+        }
+        foreach ($skip in $assetResult.SkippedPng) {
+            Write-Warn ("    {0}" -f $skip)
+        }
+        if (-not $assetResult.ToolFound) {
+            Write-Warn "  Tip: extract xnbcli.exe to tools/xnbcli-bin/ or set XNBCLI_PATH"
+        }
+    }
+}
+
 # -- Step 2: Build_temp setup (modded builds only) ----------------------------
 if ($hasMods) {
     Write-Step "Setting up build_temp"
@@ -215,6 +243,14 @@ if ($hasMods) {
     $regTarget = Join-Path $buildTemp "CastleMinerZ\ModAPI\Internal\GeneratedModRegistry.cs"
     [System.IO.File]::WriteAllText($regTarget, $regContent)
     Write-Ok ("Wrote GeneratedModRegistry.cs ({0} lines)" -f $regLines.Count)
+
+    # -- Step 3b: Generate GeneratedAssetManifest.cs -------------------------
+    if ($assetResult -and $assetResult.ManifestLines.Count -gt 0) {
+        Write-Step "Generating AssetRegistry manifest"
+        $assetRegTarget = Join-Path $buildTemp "CastleMinerZ\ModAPI\Internal\GeneratedAssetManifest.cs"
+        Write-GeneratedAssetManifest -TargetPath $assetRegTarget -RegisterLines $assetResult.ManifestLines
+        Write-Ok ("  {0} mod asset(s) registered" -f $assetResult.ManifestLines.Count)
+    }
 
     # -- Step 4: Validate mod IDs are unique ----------------------------------
     $ids = $discoveredMods | ForEach-Object { $_.Manifest.id }
@@ -341,6 +377,19 @@ Copy-Item $cmzOutput (Join-Path $gameDir 'CastleMinerZ.exe') -Force
 Write-Ok "DNA.Common.dll   replaced"
 Write-Ok "CastleMinerZ.exe replaced"
 
+if ($hasMods -and (Test-Path $modAssetStaging)) {
+    $modAssetsSrc = Join-Path $modAssetStaging 'ModAssets'
+    if (Test-Path $modAssetsSrc) {
+        $modAssetsDest = Join-Path $gameDir 'Content\ModAssets'
+        if (Test-Path $modAssetsDest) {
+            Remove-Item $modAssetsDest -Recurse -Force
+        }
+        Copy-Item $modAssetsSrc $modAssetsDest -Recurse -Force
+        $assetFileCount = (Get-ChildItem $modAssetsDest -Recurse -File).Count
+        Write-Ok ("ModAssets/         {0} file(s) copied" -f $assetFileCount)
+    }
+}
+
 $deployBytes = (Get-ChildItem $deployDir -Recurse -File | Measure-Object Length -Sum).Sum
 $deployFiles = (Get-ChildItem $deployDir -Recurse -File).Count
 Write-Step "Deploy ready"
@@ -394,4 +443,7 @@ if ($hasMods -and (Test-Path $buildTemp)) {
     Write-Step "Cleaning up build_temp"
     Remove-Item $buildTemp -Recurse -Force
     Write-Ok "removed"
+}
+if ($hasMods -and (Test-Path $modAssetStaging)) {
+    Remove-Item $modAssetStaging -Recurse -Force
 }

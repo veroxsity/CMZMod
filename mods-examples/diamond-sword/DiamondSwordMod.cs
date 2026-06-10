@@ -14,7 +14,7 @@ namespace YouDiamondSword
                 DisplayName = "Diamond Sword",
                 Description1 = "A blade of pure diamond",
                 Description2 = "Devastates undead in melee combat",
-                IconTextureName = "DiamondLaserSword",
+                IconTextureName = "diamond-sword",
                 MaxStackSize = 1,
                 BehaviorClass = ItemBehaviors.Sword,
                 EnemyDamage = 25f,

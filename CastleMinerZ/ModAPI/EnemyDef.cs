@@ -10,6 +10,9 @@ namespace DNA.CastleMinerZ.ModAPI
 
         public string DisplayName;
 
+        /// <summary>Mod asset name (mod-id/texture) or vanilla Content texture name.</summary>
+        public string TextureAssetName;
+
         public float? MaxHealth;
         public float? SlowSpeed;
         public float? FastSpeed;

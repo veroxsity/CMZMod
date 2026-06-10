@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DNA.CastleMinerZ.AI;
+using DNA.CastleMinerZ.ModAPI;
 using Microsoft.Xna.Framework;
 
 namespace DNA.CastleMinerZ.ModAPI.Internal
@@ -189,6 +190,12 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 type.SpawnAnimationSpeed = def.EmergeSpeed.Value;
             if (def.MeleeDamage.HasValue)
                 SetDamage(type.EType, def.MeleeDamage.Value);
+            if (!string.IsNullOrEmpty(def.TextureAssetName))
+            {
+                Microsoft.Xna.Framework.Graphics.Texture2D tex = Assets.LoadTexture(def.TextureAssetName);
+                if (tex != null)
+                    type.EnemyTexture = tex;
+            }
         }
 
         public static EnemyTypeEnum ResolveSpawnType(EnemyTypeEnum vanilla, EnemyType.FoundInEnum foundIn)
