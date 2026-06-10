@@ -23,7 +23,7 @@ Edit C# source or drop a mod folder into `mods/`, run one PowerShell command, FT
 
     ---
 
-    Write a self-contained mod as a folder of C# files. Drop it into `mods/`, build, deploy. The game source is never touched. Covers recipes, custom items, custom blocks, gameplay event hooks (damage, mining, crafting, kills), per-world data persistence, and a fixed set of item behaviors (sword, pickaxe, spade, axe, block, consumable).
+    Write a self-contained mod as a folder of C# files. Drop it into `mods/`, build, deploy. The game source is never touched. Covers recipes, custom items and blocks, PNG hotbar icons, enemy tweaks, worldgen, HUD overlays, sound overrides, gameplay event hooks, and per-world data persistence.
 
     **Recommended for new mods.**
 
@@ -33,7 +33,7 @@ Edit C# source or drop a mod folder into `mods/`, run one PowerShell command, FT
 
     ---
 
-    Edit the decompiled C# directly. Full control over anything in the codebase: textures, audio, new blocks, custom enemies, multiplayer protocol, save format. Higher friction, but unlimited in scope.
+    Edit the decompiled C# directly. Full control over anything the framework doesn't cover yet: block atlas extension, custom XACT banks, new network messages, achievements, and game modes. Higher friction, but unlimited in scope.
 
     **For things the framework doesn't cover.**
 

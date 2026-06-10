@@ -2,7 +2,9 @@
 
 ## Mod asset pipeline (`pack_mod_assets.ps1`)
 
-Mods can ship textures under `assets/` in their mod folder. `deploy.ps1` calls this script automatically.
+Mods ship textures as **PNG** files under `assets/`. `deploy.ps1` copies them into `Content/ModAssets/` and the game loads them at runtime via `Texture2D.FromStream`.
+
+No XNA Content Pipeline or xnbcli required for mod assets.
 
 ### Mod folder layout
 
@@ -16,9 +18,6 @@ mods/my-mod/
     └── textures/
         └── zombie-pink.png
 ```
-
-Mod PNGs are copied to `Content/ModAssets/` and loaded at runtime via `Texture2D.FromStream`.
-xnbcli packing is optional — Xbox 360 needs LZX-compressed XNB, which xnbcli cannot produce on pack.
 
 ```csharp
 // Item icon — bare filename resolves against the loading mod id
@@ -34,27 +33,10 @@ TextureAssetName = "my-mod/zombie-pink",
 Texture2D tex = Assets.LoadTexture("my-mod/my-sword");
 ```
 
-### xnbcli setup (PNG → XNB)
+### Why not XNB?
 
-xnbcli does **not** pack PNG files directly. `deploy.ps1` wraps the correct workflow:
+Vanilla CMZ textures are LZX-compressed XNB files. Tools like xnbcli produce uncompressed XNB that the Xbox 360 runtime rejects. PNG sidesteps that entirely.
 
-1. Copy your PNG into a temp folder
-2. Write a Texture2D `.json` descriptor (from `tools/templates/texture2d.json`)
-3. Run `xnbcli pack descriptor.json output_dir/` → produces `.xnb`
+To edit **vanilla** `.xnb` assets (block atlas, existing item icons), use xnbcli via the workflow in `docs/source_modding.md` — that's separate from the mod asset pipeline.
 
-Install xnbcli:
-
-1. Download [xnbcli-windows-x64.zip](https://github.com/LeonBlade/xnbcli/releases)
-2. Extract `xnbcli.exe` to `tools/xnbcli-bin/xnbcli.exe`, **or** set `XNBCLI_PATH`
-
-Without xnbcli, ship a pre-built `.xnb` next to your PNG (same basename).
-
-### Manual pack
-
-```powershell
-.\tools\pack_mod_assets.ps1   # loaded by deploy.ps1; use Invoke-ModAssetPipeline directly if needed
-```
-
-For ad-hoc xnbcli experiments, use a scratch folder under `tools/asset-work/` (gitignored).
-
-See also `docs/source_modding.md` section 4 for xnbcli background.
+For ad-hoc experiments, use a scratch folder under `tools/asset-work/` (gitignored).

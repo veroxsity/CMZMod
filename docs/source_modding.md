@@ -2,7 +2,7 @@
 
 This is the **advanced** modding guide. It covers editing the decompiled C# source directly. Anything the codebase exposes is fair game: textures, audio, blocks, custom enemies, AI behaviors, multiplayer protocol, save format. The trade-off is that mistakes touch the source tree, source-level mods are harder to share, and every change rebuilds from your local copy.
 
-**If you're new to CMZ modding, start with `framework_modding.md` instead.** The framework covers recipes, custom items, item stat tweaks, and a fixed set of item behaviors (sword, pickaxe, spade, axe, block, consumable) without ever touching the source. Most of sections 1, 2, 3, and 5 of this guide are also doable through the framework with a fraction of the friction. Direct source editing is the right answer for anything the framework doesn't yet support.
+**If you're new to CMZ modding, start with `framework_modding.md` instead.** The framework covers recipes, custom items and blocks, PNG hotbar icons, enemy tweaks, worldgen, HUD overlays, sound overrides, gameplay events, and save data — without ever touching the source. Most of sections 1, 2, 3, and 5 of this guide are also doable through the framework with a fraction of the friction. Direct source editing is the right answer for block atlas extension, custom XACT banks, new network messages, and anything else the framework doesn't cover yet.
 
 The guide is organized by mod type, in roughly increasing order of difficulty:
 

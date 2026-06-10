@@ -113,31 +113,17 @@ if ($hasMods) {
     Write-Ok "No mods found in mods/ -- building vanilla"
 }
 
-# -- Step 1b: Mod asset pipeline (PNG/XNB -> Content/ModAssets/) --------------
+# -- Step 1b: Mod asset pipeline (PNG -> Content/ModAssets/) -----------------
 $modAssetStaging = Join-Path $repoRoot 'mod_asset_staging'
 $assetResult = $null
 if ($hasMods) {
     . (Join-Path $repoRoot 'tools\pack_mod_assets.ps1')
     Write-Step "Processing mod assets"
-    $assetResult = Invoke-ModAssetPipeline -RepoRoot $repoRoot -DiscoveredMods $discoveredMods -StagingRoot $modAssetStaging
-    $assetTotal = $assetResult.PackedCount + $assetResult.CopiedCount + $assetResult.PngCount
-    if ($assetTotal -gt 0) {
-        Write-Ok ("  {0} asset(s) staged ({1} png, {2} xnb packed, {3} xnb copied)" -f $assetTotal, $assetResult.PngCount, $assetResult.PackedCount, $assetResult.CopiedCount)
+    $assetResult = Invoke-ModAssetPipeline -DiscoveredMods $discoveredMods -StagingRoot $modAssetStaging
+    if ($assetResult.PngCount -gt 0) {
+        Write-Ok ("  {0} PNG asset(s) staged" -f $assetResult.PngCount)
     } else {
         Write-Ok "  No mod assets found"
-    }
-    if ($assetResult.SkippedPng.Count -gt 0) {
-        if ($assetResult.ToolFound) {
-            Write-Warn ("  {0} PNG(s) failed to pack:" -f $assetResult.SkippedPng.Count)
-        } else {
-            Write-Warn ("  {0} PNG(s) skipped - install xnbcli or add a pre-built .xnb sidecar:" -f $assetResult.SkippedPng.Count)
-        }
-        foreach ($skip in $assetResult.SkippedPng) {
-            Write-Warn ("    {0}" -f $skip)
-        }
-        if (-not $assetResult.ToolFound) {
-            Write-Warn "  Tip: extract xnbcli.exe to tools/xnbcli-bin/ or set XNBCLI_PATH"
-        }
     }
 }
 

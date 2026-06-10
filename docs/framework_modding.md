@@ -100,6 +100,7 @@ mods/
 └── your-mod-name/
     ├── mod.json         (required)
     ├── YourMod.cs       (required: your entry point)
+    ├── assets/          (optional: PNG textures — see Assets)
     └── ...              (optional: more .cs files)
 ```
 
@@ -171,6 +172,18 @@ Later mods can override changes made by earlier ones (e.g. last `Recipes.Modify`
 ## API reference
 
 All ModAPI types live in the `DNA.CastleMinerZ.ModAPI` namespace.
+
+| API | Purpose |
+|---|---|
+| `Recipes`, `Items`, `Blocks` | Crafting, items, terrain blocks |
+| `Events`, `Data` | Gameplay hooks and per-world persistence |
+| `Assets` | Mod PNG textures (icons, enemy reskins) |
+| `Audio` | Vanilla sound cue override / trigger |
+| `UI` | HUD overlays, main menu, toasts |
+| `Entities` | Enemy stats, spawns, custom types |
+| `Worldgen` | Ore frequency, custom ores, post-gen structures |
+
+Working examples for every row above live in `mods-examples/`.
 
 ### The `Mod` attribute
 
@@ -273,7 +286,13 @@ Items.Register("you.diamond-sword", new ItemDef {
 
 The ID string (`"you.diamond-sword"` here) is how the item is referenced from recipes and from other mods. Use the `author.name` convention to avoid collisions.
 
-`IconTextureName` is the name of an existing `.xnb` in the game's `Content/` folder, without the extension. The example above reuses the vanilla diamond laser sword icon. Adding wholly new textures requires direct asset modding (see `source_modding.md`).
+`IconTextureName` controls the inventory/hotbar icon. Three forms work:
+
+- **Mod PNG** — bare filename if the PNG lives in your mod's `assets/icons/` folder (e.g. `"my-sword"`). Resolved automatically to `your-mod-id/my-sword` at build time.
+- **Full mod path** — `"author.mod/my-sword"` when referencing another mod's asset.
+- **Vanilla `.xnb`** — name of an existing texture in the game's `Content/` folder, without extension (e.g. `"DiamondLaserSword"`).
+
+See the **`Assets`** section for the folder layout and deploy behavior.
 
 `BehaviorClass` selects how the item acts in-game. See `ItemBehaviors` below for the available choices.
 
@@ -350,7 +369,7 @@ The data class that describes a custom item. All fields are public properties yo
 | `DisplayName` | `string` | Shown in inventory and hotbar |
 | `Description1` | `string` | First line of in-inventory description |
 | `Description2` | `string` | Second line (optional, can be empty) |
-| `IconTextureName` | `string` | `.xnb` name (without extension) from `Content/` |
+| `IconTextureName` | `string` | Hotbar/inventory icon: mod PNG filename, `mod-id/name`, or vanilla `.xnb` name |
 | `MaxStackSize` | `int` | Default 100. Use 1 for weapons/tools. |
 | `BehaviorClass` | `Type` | One of `ItemBehaviors.*`. Required. |
 | `EnemyDamage` | `float` | Damage per hit (weapons/consumables) |
@@ -465,7 +484,7 @@ All fields are public properties on a data class:
 | `Facing` | `BlockFace` | Default rotation when placed. `BlockFace.NUM_FACES` for none. |
 | `ParentBlockType` | `BlockTypeEnum` | Controls what drops when mined. Defaults to itself. |
 
-**On `TileIndices`:** these reference the existing vanilla texture atlas. Index 0 is dirt, 2 is the grass top, 5 is rock, and so on. To use your own art you currently need to drop into direct source editing and extend the atlas. The framework only handles slot allocation for now, not atlas extension.
+**On `TileIndices`:** these reference the existing vanilla texture atlas. Index 0 is dirt, 2 is the grass top, 5 is rock, and so on. Custom block face art requires extending the atlas via direct source editing (`source_modding.md`). Item hotbar icons can use mod PNGs via **`Assets`**.
 
 **On `ParentBlockType`:** vanilla CMZ stores "what does this block drop when mined" via the ParentBlockType field. Rock points to Rock, Dirt to Dirt, etc. For mod blocks the framework defaults this to the block's own slot, so mining marble gives you a marble item. If you want a fake stone block that drops Rock when mined, set `ParentBlockType = BlockTypeEnum.Rock` explicitly.
 
@@ -669,6 +688,265 @@ public static class KillCounterMod
 
 ---
 
+### `Assets`
+
+Ship PNG textures with your mod. `deploy.ps1` discovers files under `assets/` and copies them into `Content/ModAssets/` in the built STFS. The game loads PNGs at runtime — no XNA Content Pipeline required on your PC.
+
+#### Mod folder layout
+
+```
+mods/my-mod/
+├── mod.json
+├── MyMod.cs
+└── assets/
+    ├── icons/
+    │   └── my-sword.png       → hotbar/inventory icons
+    └── textures/
+        └── zombie-pink.png    → enemy reskins, runtime LoadTexture
+```
+
+PNG files in `assets/icons/` and `assets/textures/` are registered automatically. The logical name is always `mod-id/filename-without-extension`.
+
+#### Using icons on items
+
+```csharp
+Items.Register("you.my-sword", new ItemDef {
+    IconTextureName = "my-sword",   // resolves to you.my-sword/my-sword
+    // ...
+});
+```
+
+Or reference explicitly: `IconTextureName = "you.my-sword/my-sword"`.
+
+#### Runtime loading
+
+```csharp
+if (Assets.Exists("you.my-sword/my-sword"))
+{
+    Texture2D tex = Assets.LoadTexture("you.my-sword/my-sword");
+}
+```
+
+`Assets.ResolveIcon(modId, fileName)` returns the full logical name when a PNG exists, otherwise `null`.
+
+#### Notes
+
+- Mod assets are PNG only. No compile step — `deploy.ps1` copies files and registers them automatically.
+- Block face textures still use the vanilla atlas (`TileIndices`). Custom block art requires direct source editing to extend the atlas.
+- Enemy reskins use `EnemyDef.TextureAssetName` (see **`Entities`**). The texture must match the vanilla model's UV layout if you're reusing a zombie/alien mesh.
+- To edit existing **vanilla** `.xnb` files (not mod assets), see `docs/source_modding.md` — that workflow uses xnbcli separately.
+
+---
+
+### `Audio`
+
+Override, suppress, or trigger **existing vanilla XACT cues**. Custom sound banks are not supported yet — you can only remap or replay cues already in the game.
+
+#### Override a cue globally
+
+```csharp
+Audio.Override("Hit", "pickupitem");   // damage sounds like a pickup
+```
+
+#### Suppress or reset
+
+```csharp
+Audio.Suppress("FootStep");
+Audio.Reset("FootStep");               // back to vanilla
+```
+
+#### Play a cue on demand
+
+```csharp
+Audio.Play("pickupitem");                          // 2D
+Audio.Play("pickupitem", args.DeathPosition);      // 3D at world position
+```
+
+#### React to any sound about to play
+
+```csharp
+Audio.SoundPlay += args => {
+    if (args.CueName == "GunShot3") args.Suppressed = true;
+};
+```
+
+`Audio.GetAllCueNames()` returns a starter list of known cue names (`Hit`, `Dig`, `ZombieGrowl`, `pickupitem`, etc.). Not exhaustive — discover more by searching the source or experimenting.
+
+**Example mods:** `mods-examples/silly-sounds/`, `mods-examples/kill-cheer/`
+
+---
+
+### `UI`
+
+Add main-menu entries and draw HUD overlays during gameplay.
+
+#### HUD overlay
+
+```csharp
+UI.RegisterHUDOverlay("my-overlay", args => {
+    var font = UI.GetSmallFont();
+    if (font == null) return;
+
+    args.SpriteBatch.Begin();
+    args.SpriteBatch.DrawString(font, "Hello", new Vector2(10, 10), Color.White);
+    args.SpriteBatch.End();
+});
+```
+
+`HUDDrawArgs` provides:
+
+| Field | Notes |
+|---|---|
+| `SpriteBatch`, `Device`, `GameTime` | Standard XNA draw context |
+| `Bounds` | Title-safe screen rectangle |
+| `Player` | Local player (may be null on menus) |
+| `BelowDistanceReadoutY` | Y coordinate aligned with vanilla distance HUD |
+
+Use `UI.GetSmallFont()` or `UI.GetMedFont()` — don't reach into private game fields.
+
+#### Main menu item
+
+```csharp
+UI.AddMainMenuItem("My Mod Info", () => {
+    UI.ShowMessage("Hello from my mod!", TimeSpan.FromSeconds(3));
+});
+```
+
+Set `ShowOnTitle = true` in `MainMenuItemOptions` to pin an item on the root title menu instead of the auto-generated **Mods** submenu.
+
+#### Toast messages
+
+```csharp
+UI.ShowMessage("Structure placed!", TimeSpan.FromSeconds(2), Color.Yellow);
+```
+
+#### Custom screens
+
+```csharp
+UI.PushScreen(myCustomScreen);   // Screen subclass from DNA.Drawing.UI
+UI.PopScreen();
+```
+
+**Example mods:** `mods-examples/coords-hud/`, `mods-examples/kill-counter/`, `mods-examples/mod-info/`
+
+---
+
+### `Entities`
+
+Tweak vanilla enemy stats, control spawn rates, or register custom enemy types.
+
+#### Stat overrides (vanilla enemies)
+
+```csharp
+Entities.SetMaxHealth(EnemyTypeEnum.ZOMBIE_0_0, 50f);
+Entities.SetMoveSpeed(EnemyTypeEnum.ZOMBIE_0_0, 3f);       // slow / fast pair auto-scaled
+Entities.SetEmergeSpeed(EnemyTypeEnum.ZOMBIE_0_0, 2f);
+Entities.SetDamage(EnemyTypeEnum.ZOMBIE_0_0, 15f);
+Entities.SetSpawnWeight(EnemyTypeEnum.ZOMBIE_0_0, 2f);     // more common in spawn pool
+Entities.SetSpawnEnabled(EnemyTypeEnum.ALIEN_0_0, false);    // disable entirely
+```
+
+#### Custom enemy type
+
+Subclass an existing enemy type (usually `ZombieEnemyType`), then register:
+
+```csharp
+public class FastZombieType : ZombieEnemyType
+{
+    public FastZombieType(EnemyTypeEnum slot)
+        : base(slot, ModelNameEnum.ZOMBIE, TextureNameEnum.ZOMBIE_2,
+               FoundInEnum.ABOVEGROUND, 2, 0.1f)
+    {
+        StartingHealth = 12f;
+        BaseSlowSpeed = 5f;
+        BaseFastSpeed = 12f;
+    }
+}
+
+Entities.RegisterCustom<FastZombieType>("example.fast-zombie", new EnemyDef {
+    FoundIn = EnemyType.FoundInEnum.ABOVEGROUND,
+    SpawnWeight = 1f,
+    TextureAssetName = "example.fast-zombies/zombie-pink",  // optional mod PNG reskin
+});
+```
+
+Custom enemies take enum slots 200–255 (same pattern as mod blocks). All players in multiplayer need the same mod set so enum slots match.
+
+#### Per-spawn hook
+
+```csharp
+Entities.EnemySpawning += args => {
+    if (args.Type == EnemyTypeEnum.ALIEN_0_0) args.Cancel = true;
+    // args.Type is mutable — substitute another type
+    // args.Overrides can patch stats for this spawn only
+};
+```
+
+**Example mods:** `mods-examples/tougher-zombies/`, `mods-examples/no-aliens/`, `mods-examples/fast-zombies/`
+
+---
+
+### `Worldgen`
+
+Adjust ore generation and place structures after chunks generate. **Worldgen changes only affect newly created worlds** — existing saves keep their already-generated terrain.
+
+#### Ore frequency multiplier
+
+```csharp
+Worldgen.SetOreFrequency(BlockTypeEnum.DiamondOre, 10f);   // 10× diamonds
+```
+
+#### Custom mod ore
+
+Requires a registered mod block (see **`Blocks`**):
+
+```csharp
+Blocks.Register("example.mythril-ore", new BlockDef { /* ... */ });
+Items.Register("example.mythril-ore", new ItemDef { BehaviorClass = ItemBehaviors.Block, /* ... */ });
+
+Worldgen.RegisterOre("example.mythril-ore", new OreSpawnDef {
+    MinY = 5,
+    MaxY = 45,
+    Frequency = 1.5f,
+    NoiseOffset = 1337,
+});
+```
+
+| `OreSpawnDef` field | Notes |
+|---|---|
+| `MinY` / `MaxY` | World Y range (inclusive min, exclusive max) |
+| `Frequency` | Relative density vs vanilla ores |
+| `NoiseOffset` | Separates vein patterns between different ores |
+
+#### Post-generation structures
+
+```csharp
+Worldgen.ChunkGenerated += args => {
+    // args.Terrain, args.ChunkMin, args.ChunkSize (16×256×16)
+    Worldgen.PlaceStructure(args.Terrain, origin, myStructure);
+};
+```
+
+Implement `IStructure` to place blocks relative to an origin:
+
+```csharp
+public class MyStructure : IStructure
+{
+    public void Place(BlockTerrain terrain, IntVector3 origin)
+    {
+        Worldgen.TrySetBlock(terrain, origin, BlockTypeEnum.Rock);
+    }
+}
+```
+
+`Worldgen.TrySetBlock` handles entity blocks (torches, doors) correctly — use it instead of writing `terrain._blocks` directly.
+
+`Worldgen.RegisterBiome` is reserved but not implemented. Use `ChunkGenerated` for custom terrain overlays for now.
+
+**Example mods:** `mods-examples/diamond-rush/`, `mods-examples/mythril-ore/`, `mods-examples/ruins/`
+
+---
+
 ## Walkthrough: a custom item (diamond sword)
 
 A full working version of this is in `mods-examples/diamond-sword/`. Copy it to `mods/diamond-sword/` and build if you just want to see it run.
@@ -679,8 +957,13 @@ To build it from scratch, create the folder structure first:
 mods/
 └── diamond-sword/
     ├── mod.json
-    └── DiamondSwordMod.cs
+    ├── DiamondSwordMod.cs
+    └── assets/
+        └── icons/
+            └── diamond-sword.png
 ```
+
+Place any PNG you want for the hotbar icon in `assets/icons/`. Square works best; 64×64 or similar is fine.
 
 **`mod.json`**:
 
@@ -714,7 +997,7 @@ namespace YouDiamondSword
                 DisplayName     = "Diamond Sword",
                 Description1    = "A blade of pure diamond",
                 Description2    = "Devastates undead in melee combat",
-                IconTextureName = "DiamondLaserSword",
+                IconTextureName = "diamond-sword",
                 MaxStackSize    = 1,
                 BehaviorClass   = ItemBehaviors.Sword,
                 EnemyDamage     = 25f,
@@ -746,14 +1029,11 @@ FTP, launch, open the crafting menu. The diamond sword should appear in the reci
 Common follow-ups:
 
 - **Tune damage / cooldown.** Rebuild after every change. Test against the same enemy each time for consistent comparison.
-- **Swap the icon.** Replace `IconTextureName` with another `.xnb` name from `Content/`. Discover available names by listing the folder:
-  ```powershell
-  Get-ChildItem cmz_extracted\584E07D1\Content -Filter *.xnb | Select-Object Name
-  ```
+- **Swap the icon.** Replace the PNG in `assets/icons/`, or set `IconTextureName` to a vanilla `.xnb` name from `Content/`.
 - **Use a different behavior.** Change `BehaviorClass = ItemBehaviors.PickAxe` to make the same definition mine blocks instead. Adjust other stats accordingly (`ItemSelfDamagePerUse`, etc.).
 - **Make it cheaper / more expensive.** Change the `Recipes.Add(...)` ingredients.
 
-For a fully custom texture (your own art rather than reusing a vanilla icon), see the texture section in `source_modding.md`. That part still requires direct asset modding.
+The 3D view model in first person is still whatever the sword behavior uses from vanilla assets. Custom icons only affect the hotbar/inventory sprite unless you also mod source assets.
 
 ---
 
@@ -844,7 +1124,7 @@ Common follow-ups:
 - **Drop something other than itself.** Set `ParentBlockType = BlockTypeEnum.Rock` to make mining marble give you a Rock item. Useful for fake-look blocks like a hidden stone variant.
 - **React when it's mined.** Subscribe to `Events.PlayerMinedBlock`, check `args.BlockType` against your slot, and run custom logic (spawn particles, give a bonus item, trigger a quest, etc).
 
-For wholly new textures (not reusing atlas tiles), see the texture section in `source_modding.md`. The framework can't extend the atlas yet.
+For wholly new block face textures (not reusing atlas tiles), see the texture section in `source_modding.md`. The framework registers block slots but does not extend the terrain atlas yet.
 
 ---
 
@@ -952,9 +1232,16 @@ Running with an empty `mods/` produces an unchanged game. That's by design, not 
 
 You registered the item but didn't add a recipe for it. Add a `Recipes.Add(...)` call in the same `OnLoad`.
 
-### Item appears in inventory with no icon
+### Item appears in inventory with no icon / wrong icon
 
-`IconTextureName` doesn't match an `.xnb` in `Content/`. List the folder to find valid names:
+For mod PNG icons:
+
+- Confirm the PNG is at `assets/icons/your-name.png` in the mod folder
+- `IconTextureName` should be the bare filename (`"your-name"`) or full path (`"mod-id/your-name"`)
+- Rebuild with `.\deploy.ps1 -Pack` so assets get staged into `Content/ModAssets/`
+- Check the load log for `Failed to load mod asset` errors
+
+For vanilla `.xnb` icons, `IconTextureName` must match a texture in `Content/`:
 
 ```powershell
 Get-ChildItem cmz_extracted\584E07D1\Content -Filter *.xnb | Select-Object Name
@@ -976,17 +1263,17 @@ Check the item actually exists in vanilla. Some items in `InventoryItemIDs` are 
 
 ## What the framework doesn't (yet) cover
 
-Things you currently can't do via the framework, and have to drop into direct source editing (`source_modding.md`) for:
+Things you still need direct source editing (`source_modding.md`) for:
 
-- **New textures.** You can pick from existing atlas tiles for blocks, or name an existing `.xnb` for item icons, but adding new ones requires the asset pipeline.
-- **Per pickaxe tier dig times for mod blocks.** Mod blocks dig in `Hardness` seconds regardless of which pickaxe is used. To make a wood pick slower than a diamond pick on your specific block, you'd need to extend the pickaxe switch tables in source.
-- **New enemies** or AI behavior changes.
-- **Audio replacement** (XACT bundles).
-- **Multiplayer protocol changes.** Mod blocks DO sync over multiplayer via the existing AlterBlockMessage path, but new message types aren't supported.
-- **World generation rules.** No "spawn marble in caves" yet.
-- **Achievements, game modes, network message types.**
+- **Block texture atlas extension.** Mod blocks pick from existing `TileIndices`; you can't add new terrain tiles via the framework.
+- **Per pickaxe tier dig times for mod blocks.** Mod blocks dig in `Hardness` seconds regardless of which pickaxe is used.
+- **Novel enemy AI.** You can subclass `EnemyType` and register custom types, but complex new state machines require editing the AI source.
+- **Custom XACT sound banks.** Audio API only remaps or replays existing vanilla cues.
+- **Full biome registration.** Use `Worldgen.ChunkGenerated` for overlays; `RegisterBiome` is not wired up yet.
+- **Multiplayer protocol changes.** Mod blocks sync via existing `AlterBlockMessage`; new message types aren't supported.
+- **Achievements, game modes, custom network messages.**
 
-These may show up in the framework over time. For now, mod those via direct source editing.
+These may arrive in future ModAPI versions. For now, mod those via direct source editing.
 
 ---
 

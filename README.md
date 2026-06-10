@@ -2,7 +2,7 @@
 
 A working modding pipeline for **CastleMiner Z** (XBLIG, version 1.6.3) on RGH/JTAG Xbox 360 consoles.
 
-📖 **Docs site:** https://veroxsity.github.io/CMZMod/
+**Docs site:** https://veroxsity.github.io/CMZMod/
 
 This repo contains decompiled C# source for CastleMiner Z's game and engine, working `.csproj` files for the XNA 4.0 / Xbox 360 toolchain, a build pipeline that handles both source-level and folder-based mods, and a custom CLI tool for repacking STFS LIVE containers.
 
@@ -19,8 +19,8 @@ After setup, the daily loop is:
 
 The pipeline runs end-to-end on real RGH hardware. Two ways to mod are supported:
 
-- **Framework modding (recommended).** Write a self-contained mod as a folder in `mods/`, using the ModAPI. The game source is never touched. Currently supports recipe changes, custom items, item stat tweaks, and a fixed set of item behaviors (sword, pickaxe, spade, axe, block, consumable). See [docs/framework_modding.md](docs/framework_modding.md).
-- **Direct source editing (advanced).** Edit the decompiled C# in `CastleMinerZ\` directly. Full control over anything in the codebase. Texture and audio asset modding is documented but considerably harder than code-only mods. See [docs/source_modding.md](docs/source_modding.md).
+- **Framework modding (recommended).** Write a self-contained mod as a folder in `mods/`, using the ModAPI. The game source is never touched. Covers recipes, custom items and blocks, PNG item icons, enemy stat tweaks and custom enemy types, worldgen (ore frequency, custom ores, post-gen structures), HUD overlays, vanilla sound override/trigger, gameplay events, and per-world data. See [docs/framework_modding.md](docs/framework_modding.md).
+- **Direct source editing (advanced).** Edit the decompiled C# in `CastleMinerZ\` directly. Full control over anything the framework doesn't cover yet: block texture atlas extension, custom XACT sound banks, new network messages, achievements, and so on. See [docs/source_modding.md](docs/source_modding.md).
 
 If you have an RGH and want to get involved: **https://discord.gg/by5JD9dcEn**
 
@@ -155,12 +155,25 @@ Drop mod folders into `mods/`. Each folder is a self-contained mod with a `mod.j
 # 4. Launch and test
 ```
 
-Two working example mods ship in `mods-examples/`:
+Example mods ship in `mods-examples/` — copy any folder into `mods/` and build:
 
-- `cheap-torches/` modifies the torch recipe to 1 stick (no coal)
-- `diamond-sword/` registers a new craftable diamond sword item
+| Mod | What it demonstrates |
+|---|---|
+| `cheap-torches/` | Recipe changes |
+| `diamond-sword/` | Custom item + PNG hotbar icon |
+| `marble-block/` | Custom block |
+| `kill-counter/` | Events + HUD overlay + save data |
+| `coords-hud/` | HUD overlay |
+| `kill-cheer/` | Audio on enemy kill |
+| `silly-sounds/` | Sound cue override |
+| `tougher-zombies/` | Enemy stat override |
+| `no-aliens/` | Disable enemy spawns |
+| `fast-zombies/` | Custom enemy type |
+| `diamond-rush/` | Ore frequency multiplier |
+| `mythril-ore/` | Custom ore block + worldgen |
+| `ruins/` | Post-gen structures |
 
-Copy either into `mods/`, build, and you have a working mod in minutes. Full walkthrough in **[docs/framework_modding.md](docs/framework_modding.md)**.
+Full API reference and walkthroughs in **[docs/framework_modding.md](docs/framework_modding.md)**.
 
 ### Direct source editing (full control)
 
@@ -194,11 +207,11 @@ Use the **ModAPI**: write C# files in a `mods/` folder, drop them in, build. The
 
 Start here: **[docs/framework_modding.md](docs/framework_modding.md)**.
 
-Currently covers: recipes (add, remove, modify, clear), custom items (with sword / pickaxe / spade / axe / block / consumable behaviors), and item stat tweaks (damage, max stack, cooldown, display name, description).
+Currently covers: recipes; custom items and blocks; PNG item icons via `assets/icons/`; item and block stat tweaks; gameplay events; per-world save data; enemy stat overrides and custom enemy types; ore frequency and custom ore registration; post-generation structures; HUD overlays and main-menu items; vanilla sound cue override, suppression, and triggering.
 
 ### Direct source editing (full control)
 
-Edit the game source directly for maximum flexibility. Covers everything the framework doesn't yet support: textures, audio, new blocks, custom enemies, multiplayer protocol changes, and so on.
+Edit the game source directly for maximum flexibility. Use this for block atlas extension, custom XACT banks, new network message types, achievements, game modes, and anything else not exposed in the ModAPI yet.
 
 See: **[docs/source_modding.md](docs/source_modding.md)**.
 
