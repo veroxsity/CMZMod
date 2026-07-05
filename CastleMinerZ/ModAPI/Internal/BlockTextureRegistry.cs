@@ -9,7 +9,8 @@ using Microsoft.Xna.Framework.Graphics;
 namespace DNA.CastleMinerZ.ModAPI.Internal
 {
     /// <summary>
-    /// Patches CMZ terrain atlases from mod PNGs (Minecraft-style texture packs).
+    /// Patches CMZ terrain atlases from mod PNGs (Minecraft-style texture packs), and gives
+    /// registered mod blocks their own atlas tiles.
     ///
     /// Verified layout of Terrain\Textures.xnb (retail 1.6.3, Xbox 360):
     ///   [0] _diffuseAlpha  1024x1024 Color mips=1  - near atlas, 8x8 grid of 128px tiles.
@@ -37,17 +38,43 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
     /// downsample of its tile plus a small RGB-only edge bleed, nothing else. (The 0.0625
     /// constant in the VertexUVs setup is NOT the far sample span; whatever it drives, it
     /// does not shrink the visible cell area.)
+    ///
+    /// Custom mod-block textures: vanilla uses tiles 0-30, leaving tiles 31-63 empty. A PNG
+    /// whose name matches a REGISTERED MOD BLOCK (full id, or the id's last dot-segment:
+    /// marble-block.png -> example.marble-block) is assigned a free tile and the block's
+    /// TileIndices are rewired to it. Optional per-face art via _top/_side/_bottom suffixes.
+    /// Fresh slots first clone rock's cell (tile 5) in every atlas so the new tile inherits
+    /// the canonical solid-tile alpha / normal / spec structure, then the PNG replaces RGB.
     /// </summary>
     public static class BlockTextureRegistry
     {
         private const int TilesPerRow = 8;
         private const int TileBorderPixels = 3;
+        private const int FirstFreeTile = 31;   // tiles 0-30 are vanilla
+        private const int LastFreeTile = 63;
+        private const int StructureTemplateTile = 5; // rock: canonical solid-tile structure
 
         private struct PatchEntry
         {
             public string Alias;
             public int TileIndex;
             public string PngRelativePath;
+        }
+
+        private struct PendingBlockTexture
+        {
+            public string BaseAlias;      // filename minus face suffix
+            public string Face;           // "", "top", "side", "bottom"
+            public string PngRelativePath;
+        }
+
+        private class BlockTileAssignment
+        {
+            public string BlockId;
+            public int AllTile = -1;
+            public int TopTile = -1;
+            public int SideTile = -1;
+            public int BottomTile = -1;
         }
 
         // Minecraft grass/foliage PNGs are grayscale masks; MC tints them in a shader. CMZ has no
@@ -58,6 +85,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
         private static readonly int[] FancyLitTiles = { 4, 6, 7, 8, 9, 10, 21, 22, 23, 24 };
 
         private static readonly List<PatchEntry> _patches = new List<PatchEntry>();
+        private static readonly List<PendingBlockTexture> _pendingBlockTextures = new List<PendingBlockTexture>();
         private static readonly Dictionary<string, int> _aliasToTile = BuildAliasMap();
         private static bool _applied;
 
@@ -68,13 +96,39 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
 
             string key = alias.ToLowerInvariant();
             int tileIndex;
-            if (!_aliasToTile.TryGetValue(key, out tileIndex))
+            if (_aliasToTile.TryGetValue(key, out tileIndex))
             {
-                ModLog.Warn("BlockTextureRegistry: unknown alias '" + alias + "'");
+                _patches.Add(new PatchEntry { Alias = key, TileIndex = tileIndex, PngRelativePath = pngRelativePath });
                 return;
             }
 
-            _patches.Add(new PatchEntry { Alias = key, TileIndex = tileIndex, PngRelativePath = pngRelativePath });
+            // Not a vanilla tile alias: treat as art for a registered mod block. Mods register
+            // blocks in OnLoad(), which runs AFTER this manifest - so resolution is deferred
+            // to Apply(). Unresolvable names are warned about there.
+            string face = "";
+            string baseAlias = key;
+            if (key.EndsWith("_top"))
+            {
+                face = "top";
+                baseAlias = key.Substring(0, key.Length - 4);
+            }
+            else if (key.EndsWith("_side"))
+            {
+                face = "side";
+                baseAlias = key.Substring(0, key.Length - 5);
+            }
+            else if (key.EndsWith("_bottom"))
+            {
+                face = "bottom";
+                baseAlias = key.Substring(0, key.Length - 7);
+            }
+
+            _pendingBlockTextures.Add(new PendingBlockTexture
+            {
+                BaseAlias = baseAlias,
+                Face = face,
+                PngRelativePath = pngRelativePath
+            });
         }
 
         /// <summary>Safe to call again if the first Apply() ran before content was ready.</summary>
@@ -85,7 +139,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
 
         public static void Apply()
         {
-            if (_applied || _patches.Count == 0)
+            if (_applied || (_patches.Count == 0 && _pendingBlockTextures.Count == 0))
                 return;
 
             BlockTerrain terrain = BlockTerrain.Instance;
@@ -108,16 +162,33 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             Color[] diffusePixels = new Color[diffuseWidth * diffuseHeight];
             terrain._diffuseAlpha.GetData(diffusePixels);
 
+            // Resolve mod-block textures: allocate free tiles and pre-clone rock's cell
+            // structure into each so the standard blit below inherits sane alpha.
+            var assignments = new List<BlockTileAssignment>();
+            var freshFancyTiles = new List<int>();
+            List<PatchEntry> blockPatches = ResolvePendingBlockTextures(
+                diffusePixels, diffuseWidth, diffuseTileSize, assignments, freshFancyTiles);
+
+            var freshTiles = new List<int>();
+            for (int i = 0; i < blockPatches.Count; i++)
+            {
+                if (!freshTiles.Contains(blockPatches[i].TileIndex))
+                    freshTiles.Add(blockPatches[i].TileIndex);
+            }
+
+            var allPatches = new List<PatchEntry>(_patches);
+            allPatches.AddRange(blockPatches);
+
             var patchedTiles = new List<int>();
             int patched = 0;
-            for (int i = 0; i < _patches.Count; i++)
+            for (int i = 0; i < allPatches.Count; i++)
             {
-                PatchEntry entry = _patches[i];
+                PatchEntry entry = allPatches[i];
                 if (!BlitPngIntoAtlas(device, entry.Alias, entry.PngRelativePath, diffusePixels,
                         diffuseWidth, diffuseTileSize, entry.TileIndex))
                     continue;
 
-                // RGB-only bleed keeps the vanilla alpha-0 gutter structure intact.
+                // RGB-only bleed keeps the vanilla alpha structure intact.
                 ApplyTileEdgeBleed(diffusePixels, diffuseWidth, diffuseTileSize, entry.TileIndex,
                     TileBorderPixels, true);
                 if (!patchedTiles.Contains(entry.TileIndex))
@@ -131,6 +202,20 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 return;
             }
 
+            // Fancy-lit tiles needing the flat normal/spec template: patched vanilla fancy
+            // tiles plus every fresh tile owned by a NeedsFancyLighting mod block.
+            var fancyTiles = new List<int>();
+            for (int i = 0; i < patchedTiles.Count; i++)
+            {
+                if (IsFancyLitTile(patchedTiles[i]) && !fancyTiles.Contains(patchedTiles[i]))
+                    fancyTiles.Add(patchedTiles[i]);
+            }
+            for (int i = 0; i < freshFancyTiles.Count; i++)
+            {
+                if (!fancyTiles.Contains(freshFancyTiles[i]))
+                    fancyTiles.Add(freshFancyTiles[i]);
+            }
+
             try
             {
                 // SetData on a resource bound to the device throws on Xbox; unbind everything first.
@@ -139,10 +224,14 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 // Near atlas: update the live texture in place (vanilla has no mip chain here).
                 terrain._diffuseAlpha.SetData(diffusePixels);
 
-                PatchMipDiffuseInPlace(terrain, diffusePixels, diffuseWidth, diffuseTileSize, patchedTiles);
-                PatchNormalAtlasesInPlace(terrain, patchedTiles);
+                PatchMipDiffuseInPlace(terrain, diffusePixels, diffuseWidth, diffuseTileSize,
+                    patchedTiles, freshTiles);
+                PatchNormalAtlasesInPlace(terrain, fancyTiles);
 
                 RebindTerrainTextures(terrain);
+
+                // Point each mod block's live BlockType at its new tiles.
+                ApplyBlockTileAssignments(assignments);
             }
             catch (Exception ex)
             {
@@ -154,7 +243,8 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
 
             int mipW = terrain._mipMapDiffuse != null ? terrain._mipMapDiffuse.Width : 0;
             int mipH = terrain._mipMapDiffuse != null ? terrain._mipMapDiffuse.Height : 0;
-            ModLog.Info("BlockTextureRegistry: applied " + patched + " tile(s) in place; diffuse "
+            ModLog.Info("BlockTextureRegistry: applied " + patched + " tile(s) in place ("
+                + freshTiles.Count + " custom block tile(s)); diffuse "
                 + diffuseWidth + "x" + diffuseHeight + " tile=" + diffuseTileSize
                 + " mip=" + mipW + "x" + mipH);
         }
@@ -180,11 +270,171 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
         }
 
         // ------------------------------------------------------------------
+        // Custom mod-block tiles
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Match pending PNGs to registered mod blocks, allocate free atlas tiles (31-63),
+        /// and clone rock's diffuse cell into each fresh tile so the blit inherits the
+        /// canonical solid-tile alpha structure. Returns the blit entries for the new tiles.
+        /// </summary>
+        private static List<PatchEntry> ResolvePendingBlockTextures(Color[] diffusePixels, int diffuseWidth,
+            int diffuseTileSize, List<BlockTileAssignment> assignments, List<int> freshFancyTiles)
+        {
+            var result = new List<PatchEntry>();
+            if (_pendingBlockTextures.Count == 0)
+                return result;
+
+            // Group by base alias, preserving registration (= build manifest) order so
+            // slot allocation is deterministic for a given build on every console.
+            var order = new List<string>();
+            var groups = new Dictionary<string, List<PendingBlockTexture>>();
+            for (int i = 0; i < _pendingBlockTextures.Count; i++)
+            {
+                PendingBlockTexture p = _pendingBlockTextures[i];
+                if (!groups.ContainsKey(p.BaseAlias))
+                {
+                    groups[p.BaseAlias] = new List<PendingBlockTexture>();
+                    order.Add(p.BaseAlias);
+                }
+                groups[p.BaseAlias].Add(p);
+            }
+
+            bool[] usedTiles = new bool[TilesPerRow * TilesPerRow];
+            foreach (int t in _aliasToTile.Values)
+            {
+                if (t >= 0 && t < usedTiles.Length)
+                    usedTiles[t] = true;
+            }
+
+            Color[] templateCell = CopyTileRegion(diffusePixels, diffuseWidth, diffuseTileSize, StructureTemplateTile);
+            int cursor = FirstFreeTile;
+
+            for (int g = 0; g < order.Count; g++)
+            {
+                string baseAlias = order[g];
+                string blockId = FindModBlockId(baseAlias);
+                if (blockId == null)
+                {
+                    ModLog.Warn("BlockTextureRegistry: '" + baseAlias
+                        + "' matches no vanilla tile alias and no registered mod block");
+                    continue;
+                }
+
+                BlockDef def = BlockRegistry.Resolve(blockId);
+                var assign = new BlockTileAssignment { BlockId = blockId };
+                List<PendingBlockTexture> textures = groups[baseAlias];
+
+                for (int i = 0; i < textures.Count; i++)
+                {
+                    PendingBlockTexture p = textures[i];
+
+                    int slot = -1;
+                    while (cursor <= LastFreeTile)
+                    {
+                        if (!usedTiles[cursor])
+                        {
+                            slot = cursor;
+                            usedTiles[cursor] = true;
+                            cursor++;
+                            break;
+                        }
+                        cursor++;
+                    }
+                    if (slot < 0)
+                    {
+                        ModLog.Warn("BlockTextureRegistry: no free atlas tiles left (31-63) for '"
+                            + baseAlias + "'");
+                        break;
+                    }
+
+                    // Fresh slot: clone rock's cell so the new tile gets interior alpha 255
+                    // plus vanilla gutter structure; the blit then replaces RGB only.
+                    PasteTileRegion(diffusePixels, diffuseWidth, diffuseTileSize, slot, templateCell);
+
+                    result.Add(new PatchEntry
+                    {
+                        Alias = p.BaseAlias,
+                        TileIndex = slot,
+                        PngRelativePath = p.PngRelativePath
+                    });
+
+                    if (def != null && def.NeedsFancyLighting)
+                        freshFancyTiles.Add(slot);
+
+                    if (p.Face == "top")
+                        assign.TopTile = slot;
+                    else if (p.Face == "side")
+                        assign.SideTile = slot;
+                    else if (p.Face == "bottom")
+                        assign.BottomTile = slot;
+                    else
+                        assign.AllTile = slot;
+                }
+
+                assignments.Add(assign);
+            }
+
+            return result;
+        }
+
+        /// <summary>Exact mod block id, or unique match on the id's last dot-segment.</summary>
+        private static string FindModBlockId(string alias)
+        {
+            if (BlockRegistry.Resolve(alias) != null)
+                return alias;
+
+            string match = null;
+            foreach (string id in BlockRegistry.AllIds())
+            {
+                if (id.ToLowerInvariant().EndsWith("." + alias))
+                {
+                    if (match != null)
+                    {
+                        ModLog.Warn("BlockTextureRegistry: '" + alias
+                            + "' matches multiple mod blocks - name the PNG with the full block id");
+                        return null;
+                    }
+                    match = id;
+                }
+            }
+            return match;
+        }
+
+        /// <summary>Face order per BlockType.cs (Grass/Log/TNT): [top, side, side, bottom, side, side].</summary>
+        private static void ApplyBlockTileAssignments(List<BlockTileAssignment> assignments)
+        {
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                BlockTileAssignment assign = assignments[i];
+                BlockDef def = BlockRegistry.Resolve(assign.BlockId);
+                if (def == null)
+                    continue;
+
+                int side = assign.SideTile >= 0 ? assign.SideTile : assign.AllTile;
+                int top = assign.TopTile >= 0 ? assign.TopTile : (assign.AllTile >= 0 ? assign.AllTile : side);
+                int bottom = assign.BottomTile >= 0 ? assign.BottomTile : top;
+                if (side < 0)
+                    side = top;
+                if (top < 0)
+                {
+                    ModLog.Warn("BlockTextureRegistry: no usable tiles for '" + assign.BlockId + "'");
+                    continue;
+                }
+
+                def.TileIndices = new int[6] { top, side, side, bottom, side, side };
+                BlockRegistry.ApplyDef(assign.BlockId);
+                ModLog.Info("BlockTextureRegistry: '" + assign.BlockId + "' -> tiles top=" + top
+                    + " side=" + side + " bottom=" + bottom);
+            }
+        }
+
+        // ------------------------------------------------------------------
         // Mip diffuse atlas (far LOD + hotbar/UI)
         // ------------------------------------------------------------------
 
         private static void PatchMipDiffuseInPlace(BlockTerrain terrain, Color[] diffusePixels,
-            int diffuseWidth, int diffuseTileSize, List<int> patchedTiles)
+            int diffuseWidth, int diffuseTileSize, List<int> patchedTiles, List<int> freshTiles)
         {
             Texture2D mipTexture = terrain._mipMapDiffuse;
             if (mipTexture == null || patchedTiles.Count == 0)
@@ -199,6 +449,15 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             Color[] mipPixels = new Color[mipWidth * mipHeight];
             mipTexture.GetData(mipPixels);
 
+            // Fresh tiles: their mip cells are empty (black, near-zero alpha). Clone rock's
+            // mip cell first so they inherit a real far-LOD alpha pattern (shader data).
+            if (freshTiles.Count > 0)
+            {
+                Color[] mipTemplate = CopyTileRegion(mipPixels, mipWidth, mipTileSize, StructureTemplateTile);
+                for (int i = 0; i < freshTiles.Count; i++)
+                    PasteTileRegion(mipPixels, mipWidth, mipTileSize, freshTiles[i], mipTemplate);
+            }
+
             int mipBleedBorder = Math.Max(1, TileBorderPixels * mipTileSize / Math.Max(1, diffuseTileSize));
 
             for (int i = 0; i < patchedTiles.Count; i++)
@@ -208,7 +467,7 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                 int tileY = tileIndex / TilesPerRow;
 
                 // The far pass displays the whole 64px cell: straight downsample of the tile.
-                // RGB only - the cell keeps its vanilla alpha (shader data).
+                // RGB only - the cell keeps its (vanilla or rock-template) alpha.
                 DownsampleRegion(diffusePixels, diffuseWidth,
                     tileX * diffuseTileSize, tileY * diffuseTileSize, diffuseTileSize, diffuseTileSize,
                     mipPixels, mipWidth, tileX * mipTileSize, tileY * mipTileSize,
@@ -260,19 +519,20 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
         }
 
         // ------------------------------------------------------------------
-        // Normal/spec atlases (fancy-lit tiles only)
+        // Normal/spec atlases
         // ------------------------------------------------------------------
 
         /// <summary>
-        /// Fancy-lit blocks (ores, walls) sample _normalSpec / _mipMapNormals. Copy a flat
-        /// template from rock (tile 5) over patched fancy tiles so their new diffuse is not
-        /// lit by stale normal data (shows as black). The template is coherent RGBA
-        /// (normal + spec), so unlike the diffuse mip patch we paste all four channels -
-        /// but still strictly in place on the existing textures.
+        /// Tiles that the fancy-lit shader path samples normal/spec data for get a flat
+        /// template copied from rock (tile 5), so new diffuse art is not lit by stale or
+        /// empty normal data (shows as black). fancyTiles = patched vanilla fancy tiles
+        /// plus fresh tiles owned by NeedsFancyLighting mod blocks. The template is
+        /// coherent RGBA (normal + spec), so all four channels are pasted - but still
+        /// strictly in place on the existing textures.
         /// </summary>
-        private static void PatchNormalAtlasesInPlace(BlockTerrain terrain, List<int> patchedTiles)
+        private static void PatchNormalAtlasesInPlace(BlockTerrain terrain, List<int> fancyTiles)
         {
-            if (terrain._normalSpec == null || patchedTiles.Count == 0)
+            if (terrain._normalSpec == null || fancyTiles.Count == 0)
                 return;
 
             int normalWidth = terrain._normalSpec.Width;
@@ -281,27 +541,17 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             if (normalTileSize <= 0)
                 return;
 
-            const int templateTile = 5;
-
             Color[] normalPixels = new Color[normalWidth * normalHeight];
             terrain._normalSpec.GetData(normalPixels);
-            Color[] templateTilePixels = CopyTileRegion(normalPixels, normalWidth, normalTileSize, templateTile);
+            Color[] templateTilePixels = CopyTileRegion(normalPixels, normalWidth, normalTileSize, StructureTemplateTile);
 
-            int normalPatched = 0;
-            for (int i = 0; i < patchedTiles.Count; i++)
+            for (int i = 0; i < fancyTiles.Count; i++)
             {
-                int tileIndex = patchedTiles[i];
-                if (!IsFancyLitTile(tileIndex))
-                    continue;
-
+                int tileIndex = fancyTiles[i];
                 PasteTileRegion(normalPixels, normalWidth, normalTileSize, tileIndex, templateTilePixels);
                 ApplyTileEdgeBleed(normalPixels, normalWidth, normalTileSize, tileIndex,
                     TileBorderPixels, false);
-                normalPatched++;
             }
-
-            if (normalPatched == 0)
-                return;
 
             terrain._normalSpec.SetData(normalPixels);
 
@@ -317,14 +567,10 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                     mipNormals.GetData(mipPixels);
 
                     int mipBleedBorder = Math.Max(1, TileBorderPixels * mipTileSize / Math.Max(1, normalTileSize));
-                    var fancyPatched = new List<int>();
 
-                    for (int i = 0; i < patchedTiles.Count; i++)
+                    for (int i = 0; i < fancyTiles.Count; i++)
                     {
-                        int tileIndex = patchedTiles[i];
-                        if (!IsFancyLitTile(tileIndex))
-                            continue;
-
+                        int tileIndex = fancyTiles[i];
                         int tileX = tileIndex & (TilesPerRow - 1);
                         int tileY = tileIndex / TilesPerRow;
 
@@ -333,16 +579,14 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
                             mipPixels, mipWidth, tileX * mipTileSize, tileY * mipTileSize,
                             mipTileSize, mipTileSize, false);
                         ApplyTileEdgeBleed(mipPixels, mipWidth, mipTileSize, tileIndex, mipBleedBorder, false);
-
-                        fancyPatched.Add(tileIndex);
                     }
 
                     mipNormals.SetData(0, null, mipPixels, 0, mipPixels.Length);
-                    PatchLowerMipLevels(mipNormals, mipPixels, mipWidth, mipTileSize, fancyPatched, false);
+                    PatchLowerMipLevels(mipNormals, mipPixels, mipWidth, mipTileSize, fancyTiles, false);
                 }
             }
 
-            ModLog.Info("BlockTextureRegistry: patched " + normalPatched + " normal/spec tile(s) in place");
+            ModLog.Info("BlockTextureRegistry: patched " + fancyTiles.Count + " normal/spec tile(s) in place");
         }
 
         // ------------------------------------------------------------------

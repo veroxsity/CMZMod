@@ -48,6 +48,19 @@ function Get-ModBlockTextureSources {
     }
     return $files.Values
 }
+function Get-ModItemTextureSources {
+    param([string]$ModSourcePath)
+    $files = @{}
+    $itemsRoot = Join-Path $ModSourcePath 'assets\items'
+    if (-not (Test-Path $itemsRoot)) {
+        return @()
+    }
+    Get-ChildItem $itemsRoot -File -Filter '*.png' | ForEach-Object {
+        $alias = [System.IO.Path]::GetFileNameWithoutExtension($_.Name).ToLowerInvariant()
+        $files[$alias] = $_
+    }
+    return $files.Values
+}
 function Invoke-ModAssetPipeline {
     param(
         [string]$RepoRoot,
@@ -66,6 +79,7 @@ function Invoke-ModAssetPipeline {
         $modId = $mod.Manifest.id
         $iconSources = Get-ModIconTextureSources -ModSourcePath $mod.SourcePath -Manifest $mod.Manifest
         $blockSources = Get-ModBlockTextureSources -ModSourcePath $mod.SourcePath
+        $itemSources = Get-ModItemTextureSources -ModSourcePath $mod.SourcePath
         foreach ($file in $iconSources) {
             $baseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
             $logicalName = "$modId/$baseName"
@@ -87,6 +101,16 @@ function Invoke-ModAssetPipeline {
             Copy-Item $file.FullName $destPng -Force
             $blockCount++
             $blockManifestLines += "            BlockTextureRegistry.Register(`"$alias`", `"$pngRelativePath`");"
+        }
+        foreach ($file in $itemSources) {
+            $alias = [System.IO.Path]::GetFileNameWithoutExtension($file.Name).ToLowerInvariant()
+            $pngRelativePath = "ModAssets\\$modId\\items\\$alias.png"
+            $destDir = Join-Path $StagingRoot "ModAssets\$modId\items"
+            $destPng = Join-Path $destDir "$alias.png"
+            New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+            Copy-Item $file.FullName $destPng -Force
+            $blockCount++
+            $blockManifestLines += "            VanillaItemIconRegistry.Register(`"$alias`", `"$pngRelativePath`");"
         }
     }
     return [PSCustomObject]@{

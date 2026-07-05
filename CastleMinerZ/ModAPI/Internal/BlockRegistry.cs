@@ -44,6 +44,12 @@ namespace DNA.CastleMinerZ.ModAPI.Internal
             return def;
         }
 
+        /// <summary>All registered mod block ids (used by BlockTextureRegistry alias matching).</summary>
+        public static IEnumerable<string> AllIds()
+        {
+            return _blocks.Keys;
+        }
+
         public static BlockTypeEnum GetSlot(string id)
         {
             BlockDef def = Resolve(id);

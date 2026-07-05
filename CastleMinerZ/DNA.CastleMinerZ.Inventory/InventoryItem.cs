@@ -181,6 +181,20 @@ namespace DNA.CastleMinerZ.Inventory
 				{
 					FinishInitialization(batch.GraphicsDevice);
 				}
+				// Vanilla icon override (texture packs): draw the mod PNG instead of the
+				// live-rendered atlas cell. Same draw call as mod-item PNG icons above.
+				Texture2D vanillaIconOverride = DNA.CastleMinerZ.ModAPI.Internal.VanillaItemIconRegistry.GetIcon(ID);
+				if (vanillaIconOverride != null)
+				{
+					// Inset 1/8 per side (icon at 75%): full-cell PNGs read oversized next
+					// to the vanilla 3D-rendered icons, which never fill their whole cell.
+					int iconInsetX = destRect.Width / 8;
+					int iconInsetY = destRect.Height / 8;
+					Rectangle iconRect = new Rectangle(destRect.X + iconInsetX, destRect.Y + iconInsetY,
+						destRect.Width - iconInsetX * 2, destRect.Height - iconInsetY * 2);
+					batch.Draw(vanillaIconOverride, iconRect, color);
+					return;
+				}
 				int iD = (int)ID;
 				batch.Draw(sourceRectangle: new Rectangle((iD & 7) * 64, iD / 8 * 64, 64, 64), texture: _2DImages, destinationRectangle: destRect, color: color);
 			}

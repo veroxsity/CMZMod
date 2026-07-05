@@ -16,6 +16,9 @@ namespace ExampleMarbleBlock
                 Hardness = 4,
                 LightTransmission = 0.2f,
                 SelfIllumination = 0.1f,
+                // Fallback art only: assets/blocks/marble-block.png is auto-assigned a
+                // free atlas tile at load and TileIndices are rewired to it. These
+                // indices are only used if the PNG is missing (tile 0 = dirt).
                 TileIndices = new int[6] { 0, 0, 0, 0, 0, 0 },
                 BlockPlayer = true,
                 CanBeDug = true,

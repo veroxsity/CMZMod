@@ -770,10 +770,18 @@ Copy-Item -Recurse mods-examples\faithful-textures mods\00-faithful-textures
 .\deploy.ps1 -Pack
 ```
 
+#### Item icon packs (vanilla items)
+
+Drop PNGs in `assets/items/` to replace the hotbar/inventory icons of **vanilla items** (which are normally live-rendered 3D snapshots). The filename is an alias onto the vanilla item id: `iron_pickaxe.png`, `diamond_spade.png` (or `_shovel`), `knife.png` / `gold_knife.png` / `diamond_knife.png` / `bloodstone_knife.png` (sword art works well here), `compass.png`, `clock.png`, `torch.png`, `stick.png`, `door.png`, `iron_ore.png`, and the other pickaxe/spade tiers. Items without an override keep their vanilla 3D-rendered icon; unknown aliases log a warning. Guns and laser tools have no aliases yet — they stay 3D.
+
+#### Custom art for your own blocks
+
+A PNG whose filename matches a **registered mod block** — the full id, or its last dot-segment (`marble-block.png` → `example.marble-block`) — is automatically assigned a free atlas tile (vanilla uses 31 of the 64 slots; 31–63 are free) and the block's `TileIndices` are rewired to it at load. Optional per-face art: `<name>_top.png`, `<name>_side.png`, `<name>_bottom.png`. The `TileIndices` you set in the `BlockDef` then act only as a fallback for when the PNG is missing. See `mods-examples/marble-block/` for a complete example.
+
 #### Notes
 
 - Mod assets are PNG only. No compile step — `deploy.ps1` copies files and registers them automatically.
-- Block texture packs replace existing atlas tiles (64 slots total). Mod blocks still pick tiles via `TileIndices`.
+- Vanilla-alias PNGs replace existing atlas tiles; PNGs named after registered mod blocks claim free tiles (31–63) automatically.
 - Enemy reskins use `EnemyDef.TextureAssetName` (see **`Entities`**). The texture must match the vanilla model's UV layout if you're reusing a zombie/alien mesh.
 - To edit existing **vanilla** `.xnb` files (not mod assets), see `docs/source_modding.md` — that workflow uses xnbcli separately.
 
@@ -1307,7 +1315,7 @@ Check the item actually exists in vanilla. Some items in `InventoryItemIDs` are 
 Things you still need direct source editing (`source_modding.md`) for:
 
 - **Custom normal/spec maps for texture packs.** Block packs patch diffuse and give fancy-lit tiles a flat rock normal/spec template; authoring your own normal maps still needs engine work.
-- **Block atlas expansion beyond 64 tiles.** Texture packs replace existing tiles; new unique tiles need engine work.
+- **Block atlas expansion beyond 64 tiles.** Vanilla uses 31 tiles and custom block art claims the 33 free slots automatically; going past 64 unique tiles needs engine work.
 - **Per pickaxe tier dig times for mod blocks.** Mod blocks dig in `Hardness` seconds regardless of which pickaxe is used.
 - **Novel enemy AI.** You can subclass `EnemyType` and register custom types, but complex new state machines require editing the AI source.
 - **Custom XACT sound banks.** Audio API only remaps or replays existing vanilla cues.
