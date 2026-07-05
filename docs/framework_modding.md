@@ -177,7 +177,7 @@ All ModAPI types live in the `DNA.CastleMinerZ.ModAPI` namespace.
 |---|---|
 | `Recipes`, `Items`, `Blocks` | Crafting, items, terrain blocks |
 | `Events`, `Data` | Gameplay hooks and per-world persistence |
-| `Assets` | Mod PNG textures (icons, enemy reskins) |
+| `Assets` | Mod PNG textures (icons, enemy reskins, block texture packs) |
 | `Audio` | Vanilla sound cue override / trigger |
 | `UI` | HUD overlays, main menu, toasts |
 | `Entities` | Enemy stats, spawns, custom types |
@@ -698,14 +698,18 @@ Ship PNG textures with your mod. `deploy.ps1` discovers files under `assets/` an
 mods/my-mod/
 ├── mod.json
 ├── MyMod.cs
-└── assets/
-    ├── icons/
-    │   └── my-sword.png       → hotbar/inventory icons
-    └── textures/
-        └── zombie-pink.png    → enemy reskins, runtime LoadTexture
+    └── assets/
+        ├── icons/
+        │   └── my-sword.png       → hotbar/inventory icons
+        ├── textures/
+        │   └── zombie-pink.png    → enemy reskins, runtime LoadTexture
+        └── blocks/
+            ├── dirt.png           → terrain texture pack (atlas patch)
+            ├── grass_top.png
+            └── cobblestone.png
 ```
 
-PNG files in `assets/icons/` and `assets/textures/` are registered automatically. The logical name is always `mod-id/filename-without-extension`.
+PNG files in `assets/icons/` and `assets/textures/` are registered for runtime loading. Files in `assets/blocks/` patch the terrain diffuse atlas at startup (Minecraft-style texture packs).
 
 #### Using icons on items
 
@@ -729,10 +733,47 @@ if (Assets.Exists("you.my-sword/my-sword"))
 
 `Assets.ResolveIcon(modId, fileName)` returns the full logical name when a PNG exists, otherwise `null`.
 
+#### Block texture packs (terrain)
+
+Drop PNGs in `assets/blocks/`. The filename (without extension) is an **alias** that maps to a slot in CMZ's 8×8 terrain atlas. At startup the game patches the diffuse and mip-diffuse atlases in place; fancy-lit tiles (ores, walls) also get a flat rock normal/spec template so custom art isn't lit by stale normal data.
+
+| PNG filename | Replaces |
+|---|---|
+| `dirt.png` | Dirt |
+| `grass_top.png` + `grass_side.png` | Grass block faces |
+| `cobblestone.png` | Rock / stone |
+| `sand.png`, `coal_ore.png`, `iron_ore.png`, … | Matching vanilla blocks |
+| `log_top.png` + `log_side.png` | Log ends vs bark |
+| `tnt_top.png` + `tnt_side.png` | TNT |
+
+Any square PNG works (16×16 Faithful / Minecraft textures scale fine). No C# required — an empty `[Mod]` class is enough.
+
+Texture packs are **self-contained mods** — the PNGs ship inside the mod folder and `deploy.ps1` discovers them automatically. No import step, no extra tooling: drop the folder into `mods/`, pack, play.
+
+```
+mods/my-texture-pack/
+├── mod.json                   { "id": "you.my-texture-pack", ... }
+├── MyTexturePack.cs           an empty [Mod] class is enough
+└── assets/
+    └── blocks/
+        ├── dirt.png
+        ├── grass_top.png
+        └── cobblestone.png
+```
+
+Look for `BlockTextureRegistry: applied N tile(s) in place` in the load log.
+
+**Example:** `mods-examples/faithful-textures/` ships ready to use (block art from the [Faithful](https://faithfulpack.net/) pack):
+
+```powershell
+Copy-Item -Recurse mods-examples\faithful-textures mods\00-faithful-textures
+.\deploy.ps1 -Pack
+```
+
 #### Notes
 
 - Mod assets are PNG only. No compile step — `deploy.ps1` copies files and registers them automatically.
-- Block face textures still use the vanilla atlas (`TileIndices`). Custom block art requires direct source editing to extend the atlas.
+- Block texture packs replace existing atlas tiles (64 slots total). Mod blocks still pick tiles via `TileIndices`.
 - Enemy reskins use `EnemyDef.TextureAssetName` (see **`Entities`**). The texture must match the vanilla model's UV layout if you're reusing a zombie/alien mesh.
 - To edit existing **vanilla** `.xnb` files (not mod assets), see `docs/source_modding.md` — that workflow uses xnbcli separately.
 
@@ -1265,7 +1306,8 @@ Check the item actually exists in vanilla. Some items in `InventoryItemIDs` are 
 
 Things you still need direct source editing (`source_modding.md`) for:
 
-- **Block texture atlas extension.** Mod blocks pick from existing `TileIndices`; you can't add new terrain tiles via the framework.
+- **Custom normal/spec maps for texture packs.** Block packs patch diffuse and give fancy-lit tiles a flat rock normal/spec template; authoring your own normal maps still needs engine work.
+- **Block atlas expansion beyond 64 tiles.** Texture packs replace existing tiles; new unique tiles need engine work.
 - **Per pickaxe tier dig times for mod blocks.** Mod blocks dig in `Hardness` seconds regardless of which pickaxe is used.
 - **Novel enemy AI.** You can subclass `EnemyType` and register custom types, but complex new state machines require editing the AI source.
 - **Custom XACT sound banks.** Audio API only remaps or replays existing vanilla cues.

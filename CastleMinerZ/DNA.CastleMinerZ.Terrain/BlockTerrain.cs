@@ -7,6 +7,7 @@ using DNA.CastleMinerZ.Utils.Threading;
 using DNA.CastleMinerZ.Utils.Trace;
 using DNA.Drawing;
 using DNA.CastleMinerZ.ModAPI;
+using DNA.CastleMinerZ.ModAPI.Internal;
 using DNA.Profiling;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -1192,6 +1193,7 @@ namespace DNA.CastleMinerZ.Terrain
 			}
 			_initted = true;
 			_resetRequested = false;
+			BlockTextureRegistry.EnsureApplied();
 			ChunkCache.Instance.Start(true);
 			ChunkCache.Instance.MakeHost(worldInfo, host);
 			_worldBuilder = WorldInfo.GetBuilder();

@@ -121,8 +121,12 @@ if ($hasMods) {
     Write-Step "Processing mod assets"
     $assetResult = Invoke-ModAssetPipeline -DiscoveredMods $discoveredMods -StagingRoot $modAssetStaging
     if ($assetResult.PngCount -gt 0) {
-        Write-Ok ("  {0} PNG asset(s) staged" -f $assetResult.PngCount)
-    } else {
+        Write-Ok ("  {0} icon/texture PNG(s) staged" -f $assetResult.PngCount)
+    }
+    if ($assetResult.BlockCount -gt 0) {
+        Write-Ok ("  {0} block texture PNG(s) staged" -f $assetResult.BlockCount)
+    }
+    if ($assetResult.PngCount -eq 0 -and $assetResult.BlockCount -eq 0) {
         Write-Ok "  No mod assets found"
     }
 }
@@ -236,6 +240,13 @@ if ($hasMods) {
         $assetRegTarget = Join-Path $buildTemp "CastleMinerZ\ModAPI\Internal\GeneratedAssetManifest.cs"
         Write-GeneratedAssetManifest -TargetPath $assetRegTarget -RegisterLines $assetResult.ManifestLines
         Write-Ok ("  {0} mod asset(s) registered" -f $assetResult.ManifestLines.Count)
+    }
+
+    if ($assetResult -and $assetResult.BlockManifestLines.Count -gt 0) {
+        Write-Step "Generating BlockTextureRegistry manifest"
+        $blockRegTarget = Join-Path $buildTemp "CastleMinerZ\ModAPI\Internal\GeneratedBlockTextureManifest.cs"
+        Write-GeneratedBlockTextureManifest -TargetPath $blockRegTarget -RegisterLines $assetResult.BlockManifestLines
+        Write-Ok ("  {0} block texture(s) registered" -f $assetResult.BlockManifestLines.Count)
     }
 
     # -- Step 4: Validate mod IDs are unique ----------------------------------

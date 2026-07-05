@@ -1,0 +1,8 @@
+{
+    "id": "example.faithful-textures",
+    "name": "Faithful Block Textures",
+    "author": "CMZMod",
+    "version": "1.0.0",
+    "description": "Minecraft Faithful-style terrain texture pack (block PNGs in assets/blocks/)",
+    "modapi_version": "1"
+}

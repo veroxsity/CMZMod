@@ -155,3 +155,6 @@ $RECYCLE.BIN/
 scratch/
 tmp/
 temp/
+
+/xnbcli/
+tools/terrain_baselines/

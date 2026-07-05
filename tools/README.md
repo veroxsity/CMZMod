@@ -4,6 +4,8 @@
 
 Mods ship textures as **PNG** files under `assets/`. `deploy.ps1` copies them into `Content/ModAssets/` and the game loads them at runtime via `Texture2D.FromStream`.
 
+Block texture packs use `assets/blocks/` inside the mod folder — self-contained, discovered by `deploy.ps1`, no import step. See `docs/framework_modding.md`.
+
 No XNA Content Pipeline or xnbcli required for mod assets.
 
 ### Mod folder layout

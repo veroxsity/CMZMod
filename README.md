@@ -19,7 +19,7 @@ After setup, the daily loop is:
 
 The pipeline runs end-to-end on real RGH hardware. Two ways to mod are supported:
 
-- **Framework modding (recommended).** Write a self-contained mod as a folder in `mods/`, using the ModAPI. The game source is never touched. Covers recipes, custom items and blocks, PNG item icons, enemy stat tweaks and custom enemy types, worldgen (ore frequency, custom ores, post-gen structures), HUD overlays, vanilla sound override/trigger, gameplay events, and per-world data. See [docs/framework_modding.md](docs/framework_modding.md).
+- **Framework modding (recommended).** Write a self-contained mod as a folder in `mods/`, using the ModAPI. The game source is never touched. Covers recipes, custom items and blocks, PNG item icons, block texture packs (drop PNGs in `assets/blocks/`), enemy stat tweaks and custom enemy types, worldgen (ore frequency, custom ores, post-gen structures), HUD overlays, vanilla sound override/trigger, gameplay events, and per-world data. See [docs/framework_modding.md](docs/framework_modding.md).
 - **Direct source editing (advanced).** Edit the decompiled C# in `CastleMinerZ\` directly. Full control over anything the framework doesn't cover yet: block texture atlas extension, custom XACT sound banks, new network messages, achievements, and so on. See [docs/source_modding.md](docs/source_modding.md).
 
 If you have an RGH and want to get involved: **https://discord.gg/by5JD9dcEn**
@@ -171,6 +171,7 @@ Example mods ship in `mods-examples/` — copy any folder into `mods/` and build
 | `fast-zombies/` | Custom enemy type |
 | `diamond-rush/` | Ore frequency multiplier |
 | `mythril-ore/` | Custom ore block + worldgen |
+| `faithful-textures/` | Minecraft-style block texture pack |
 | `ruins/` | Post-gen structures |
 
 Full API reference and walkthroughs in **[docs/framework_modding.md](docs/framework_modding.md)**.

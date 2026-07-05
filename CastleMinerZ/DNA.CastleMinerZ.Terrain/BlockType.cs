@@ -186,6 +186,17 @@ namespace DNA.CastleMinerZ.Terrain
 			return bt;
 		}
 
+		/// <summary>Updates live tile indices for a vanilla block (texture pack face remaps).</summary>
+		public static void ApplyTileIndices(BlockTypeEnum type, int[] tileIndices)
+		{
+			if (tileIndices == null || tileIndices.Length != 6)
+				return;
+			BlockType block = GetType(type);
+			if (block == null)
+				return;
+			block.TileIndices = (int[])tileIndices.Clone();
+		}
+
 		public static void RegisterModBlock(ModAPI.BlockDef def)
 		{
 			int slot = (int)def.Slot;

@@ -477,6 +477,7 @@ namespace DNA.CastleMinerZ
 				AvatarBone.CollarLeft
 			});
 			FrontEnd = new FrontEndScreen(this);
+			ModRegistry.Initialize();
 			BeginLoadTerrain(null, true);
 			while (!loadScreen.Finished)
 			{
@@ -487,7 +488,6 @@ namespace DNA.CastleMinerZ
 			texture2D.Dispose();
 			IsPurchased = !false /* Guide.IsTrialMode patched out for RGH */;
 			NetworkSession.InviteAccepted += NetworkSession_InviteAccepted;
-			ModRegistry.Initialize();
 			base.SecondaryLoad();
 		}
 
